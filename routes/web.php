@@ -50,12 +50,12 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
 Route::middleware(['auth', 'role:admin|editor'])->prefix('master')->name('master.')->group(function () {
     // Varietas
     Route::resource('varieties', \App\Http\Controllers\VarietyController::class);
-    // Satuan
-    Route::resource('units', \App\Http\Controllers\UnitController::class);
-    // Gudang
-    Route::resource('warehouses', \App\Http\Controllers\WarehouseController::class);
-    // Petani
-    Route::resource('farmers', \App\Http\Controllers\FarmerController::class);
+    // Satuan - temporarily disabled
+    // Route::resource('units', \App\Http\Controllers\UnitController::class);
+    // Gudang - temporarily disabled  
+    // Route::resource('warehouses', \App\Http\Controllers\WarehouseController::class);
+    // Petani - temporarily disabled
+    // Route::resource('farmers', \App\Http\Controllers\FarmerController::class);
 });
 
 // Barang Masuk Basah Routes
