@@ -46,4 +46,9 @@ storage/framework/cache/data/
 *.tar.xz
 *.tar.zst
 
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
 ```
