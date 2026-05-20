@@ -22,7 +22,8 @@ class PackedStockController extends Controller
     public function create()
     {
         $processes = PackagingProcess::all();
-        return view('packed-stocks.create', compact('processes'));
+        $warehouses = \App\Models\Warehouse::all();
+        return view('packed-stocks.create', compact('processes', 'warehouses'));
     }
 
     public function store(Request $request)
@@ -30,12 +31,13 @@ class PackedStockController extends Controller
         $validated = $request->validate([
             'packaging_process_id' => 'required|exists:packaging_processes,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'lot_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
 
         PackedStock::create($validated);
 
-        return redirect()->route('packed.stocks.index')
+        return redirect()->route('packed-stocks.index')
             ->with('success', 'Stok terpack berhasil ditambahkan.');
     }
 
@@ -47,7 +49,8 @@ class PackedStockController extends Controller
     public function edit(PackedStock $stock)
     {
         $processes = PackagingProcess::all();
-        return view('packed-stocks.edit', compact('stock', 'processes'));
+        $warehouses = \App\Models\Warehouse::all();
+        return view('packed-stocks.edit', compact('stock', 'processes', 'warehouses'));
     }
 
     public function update(Request $request, PackedStock $stock)
@@ -55,12 +58,13 @@ class PackedStockController extends Controller
         $validated = $request->validate([
             'packaging_process_id' => 'required|exists:packaging_processes,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'lot_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
 
         $stock->update($validated);
 
-        return redirect()->route('packed.stocks.index')
+        return redirect()->route('packed-stocks.index')
             ->with('success', 'Stok terpack berhasil diupdate.');
     }
 
@@ -68,7 +72,7 @@ class PackedStockController extends Controller
     {
         $stock->delete();
 
-        return redirect()->route('packed.stocks.index')
+        return redirect()->route('packed-stocks.index')
             ->with('success', 'Stok terpack berhasil dihapus.');
     }
 }

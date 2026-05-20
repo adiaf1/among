@@ -1,28 +1,57 @@
-```
-# Environment
-.env
-
-# Dependencies
+```php
+# Laravel-specific ignores
 vendor/
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+node_modules/
+public/storage
+bootstrap/cache/
+storage/logs/
+storage/framework/
+.npm
+.yarn
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+.env.test
+.env.testing
+.phpunit.result.cache
+.php_cs.cache
+.ide-helper.meta
+.ide-helper.php
+.svn
 .DS_Store
 Thumbs.db
-
-# Cache
-storage/framework/cache/data/
-
-# Compressed files
+*.log
+*.tmp
+*.swp
+*.swo
+.vscode/
+.idea/
+composer.lock
+yarn-error.log
+npm-debug.log*
+*.local
+.sass-cache
+.htrouter.php
+.php_cs
+.php_cs.dist
+.php_cs.php
+.php_cs.cache
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+*.pyc
+*.class
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
 *.zip
 *.gz
 *.tar
@@ -45,10 +74,4 @@ storage/framework/cache/data/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
 ```
