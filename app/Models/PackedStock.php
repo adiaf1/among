@@ -11,6 +11,7 @@ class PackedStock extends Model
 
     protected $fillable = [
         'stock_number',
+        'lot_number',
         'stock_date',
         'packaging_process_id',
         'variety_id',
