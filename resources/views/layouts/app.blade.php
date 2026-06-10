@@ -416,6 +416,12 @@
                                                 <div data-i18n="Gudang">Gudang</div>
                                             </a>
                                         </li>
+                                        <li class="menu-item {{ request()->routeIs('master.items.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.items.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-package"></i>
+                                                <div data-i18n="Barang">Barang</div>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                                 @endhasanyrole

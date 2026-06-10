@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmerController;
+use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
@@ -50,6 +51,7 @@ Route::middleware(['auth', 'role:admin|editor'])
         Route::resource('suppliers', SupplierController::class);
         Route::resource('customers', CustomerController::class);
         Route::resource('warehouses', WarehouseController::class);
+        Route::resource('items', ItemController::class);
     });
 
 require __DIR__.'/auth.php';
