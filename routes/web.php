@@ -6,9 +6,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LandController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
@@ -57,6 +59,8 @@ Route::middleware(['auth', 'role:admin|editor'])
 
 Route::middleware(['auth', 'role:admin|editor'])->group(function () {
     Route::resource('stocks', StockController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('stock-transfers', StockTransferController::class)->only(['index', 'create', 'store', 'show']);
 });
 
 require __DIR__.'/auth.php';

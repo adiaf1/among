@@ -433,6 +433,18 @@
                                         <div data-i18n="Stok">Stok</div>
                                     </a>
                                 </li>
+                                <li class="menu-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
+                                    <a href="{{ route('purchases.index') }}" class="menu-link">
+                                        <i class="menu-icon tf-icons bx bx-cart-add"></i>
+                                        <div data-i18n="Pembelian">Pembelian</div>
+                                    </a>
+                                </li>
+                                <li class="menu-item {{ request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
+                                    <a href="{{ route('stock-transfers.index') }}" class="menu-link">
+                                        <i class="menu-icon tf-icons bx bx-transfer"></i>
+                                        <div data-i18n="Mutasi Stok">Mutasi Stok</div>
+                                    </a>
+                                </li>
                                 @endhasanyrole
 
                                 @hasanyrole('admin|editor')

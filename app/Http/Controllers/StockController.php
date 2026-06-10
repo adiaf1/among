@@ -34,8 +34,7 @@ class StockController extends Controller
             ->when($warehouseId, fn ($query) => $query->where('warehouse_id', $warehouseId))
             ->join('items', 'stocks.item_id', '=', 'items.id')
             ->join('warehouses', 'stocks.warehouse_id', '=', 'warehouses.id')
-            ->orderBy('items.name')
-            ->orderBy('warehouses.name')
+            ->latest('stocks.created_at')
             ->select('stocks.*')
             ->paginate(10)
             ->withQueryString();

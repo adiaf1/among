@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             WarehouseSeeder::class,
             ItemSeeder::class,
+            PurchaseSeeder::class,
         ]);
     }
 }
