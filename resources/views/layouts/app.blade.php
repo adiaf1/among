@@ -427,23 +427,31 @@
                                 @endhasanyrole
 
                                 @hasanyrole('admin|editor')
-                                <li class="menu-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
-                                    <a href="{{ route('stocks.index') }}" class="menu-link">
+                                <li class="menu-item {{ request()->routeIs('stocks.*') || request()->routeIs('purchases.*') || request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
+                                    <a href="javascript:void(0)" class="menu-link menu-toggle">
                                         <i class="menu-icon tf-icons bx bx-layer"></i>
-                                        <div data-i18n="Stok">Stok</div>
+                                        <div data-i18n="Persediaan">Persediaan</div>
                                     </a>
-                                </li>
-                                <li class="menu-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
-                                    <a href="{{ route('purchases.index') }}" class="menu-link">
-                                        <i class="menu-icon tf-icons bx bx-cart-add"></i>
-                                        <div data-i18n="Pembelian">Pembelian</div>
-                                    </a>
-                                </li>
-                                <li class="menu-item {{ request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
-                                    <a href="{{ route('stock-transfers.index') }}" class="menu-link">
-                                        <i class="menu-icon tf-icons bx bx-transfer"></i>
-                                        <div data-i18n="Mutasi Stok">Mutasi Stok</div>
-                                    </a>
+                                    <ul class="menu-sub">
+                                        <li class="menu-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
+                                            <a href="{{ route('stocks.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-layer"></i>
+                                                <div data-i18n="Stok">Stok</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
+                                            <a href="{{ route('purchases.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-cart-add"></i>
+                                                <div data-i18n="Pembelian Barang">Pembelian Barang</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
+                                            <a href="{{ route('stock-transfers.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-transfer"></i>
+                                                <div data-i18n="Mutasi Stok">Mutasi Stok</div>
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </li>
                                 @endhasanyrole
 
