@@ -384,6 +384,11 @@
                                                 <div data-i18n="Kelas Benih">Kelas Benih</div>
                                             </a>
                                         </li>
+                                        <li class="menu-item {{ request()->routeIs('master.farmers.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.farmers.index') }}" class="menu-link">
+                                                <div data-i18n="Petani">Petani</div>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                                 @endhasanyrole

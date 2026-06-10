@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FarmerController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
 use App\Http\Controllers\UserController;
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'role:admin|editor'])
     ->group(function () {
         Route::resource('rice-varieties', RiceVarietyController::class);
         Route::resource('seed-classes', SeedClassController::class);
+        Route::resource('farmers', FarmerController::class);
     });
 
 require __DIR__.'/auth.php';
