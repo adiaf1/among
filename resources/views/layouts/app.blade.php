@@ -376,17 +376,38 @@
                                     <ul class="menu-sub">
                                         <li class="menu-item {{ request()->routeIs('master.rice-varieties.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.rice-varieties.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-leaf"></i>
                                                 <div data-i18n="Varietas Padi">Varietas Padi</div>
                                             </a>
                                         </li>
                                         <li class="menu-item {{ request()->routeIs('master.seed-classes.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.seed-classes.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-certification"></i>
                                                 <div data-i18n="Kelas Benih">Kelas Benih</div>
                                             </a>
                                         </li>
                                         <li class="menu-item {{ request()->routeIs('master.farmers.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.farmers.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-user-pin"></i>
                                                 <div data-i18n="Petani">Petani</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('master.lands.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.lands.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-map"></i>
+                                                <div data-i18n="Lahan">Lahan</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('master.suppliers.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.suppliers.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-store"></i>
+                                                <div data-i18n="Supplier">Supplier</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('master.customers.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.customers.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-group"></i>
+                                                <div data-i18n="Pelanggan">Pelanggan</div>
                                             </a>
                                         </li>
                                     </ul>

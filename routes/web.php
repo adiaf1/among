@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmerController;
+use App\Http\Controllers\LandController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +45,9 @@ Route::middleware(['auth', 'role:admin|editor'])
         Route::resource('rice-varieties', RiceVarietyController::class);
         Route::resource('seed-classes', SeedClassController::class);
         Route::resource('farmers', FarmerController::class);
+        Route::resource('lands', LandController::class);
+        Route::resource('suppliers', SupplierController::class);
+        Route::resource('customers', CustomerController::class);
     });
 
 require __DIR__.'/auth.php';

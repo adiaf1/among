@@ -5,9 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Farmer extends Model
+class Supplier extends Model
 {
     use HasFactory, HasUuids;
 
@@ -18,8 +17,9 @@ class Farmer extends Model
     protected $fillable = [
         'code',
         'name',
+        'contact_person',
         'phone',
-        'identity_number',
+        'email',
         'address',
         'notes',
         'is_active',
@@ -28,9 +28,4 @@ class Farmer extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
-
-    public function lands(): HasMany
-    {
-        return $this->hasMany(Land::class);
-    }
 }

@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
             RiceVarietySeeder::class,
             SeedClassSeeder::class,
             FarmerSeeder::class,
+            LandSeeder::class,
+            SupplierSeeder::class,
+            CustomerSeeder::class,
         ]);
     }
 }

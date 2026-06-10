@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Farmer extends Model
+class Land extends Model
 {
     use HasFactory, HasUuids;
 
@@ -16,21 +16,25 @@ class Farmer extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'farmer_id',
         'code',
         'name',
-        'phone',
-        'identity_number',
-        'address',
+        'area_size',
+        'location',
+        'soil_type',
+        'irrigation_type',
+        'ownership_status',
         'notes',
         'is_active',
     ];
 
     protected $casts = [
+        'area_size' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
-    public function lands(): HasMany
+    public function farmer(): BelongsTo
     {
-        return $this->hasMany(Land::class);
+        return $this->belongsTo(Farmer::class);
     }
 }
