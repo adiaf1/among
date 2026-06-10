@@ -427,6 +427,15 @@
                                 @endhasanyrole
 
                                 @hasanyrole('admin|editor')
+                                <li class="menu-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
+                                    <a href="{{ route('stocks.index') }}" class="menu-link">
+                                        <i class="menu-icon tf-icons bx bx-layer"></i>
+                                        <div data-i18n="Stok">Stok</div>
+                                    </a>
+                                </li>
+                                @endhasanyrole
+
+                                @hasanyrole('admin|editor')
                                 <!-- Users -->
                                 <li class="menu-item {{ request()->is('users','roles','permissions') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">

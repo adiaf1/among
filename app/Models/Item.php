@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Item extends Model
 {
@@ -40,5 +41,10 @@ class Item extends Model
     public function seedClass(): BelongsTo
     {
         return $this->belongsTo(SeedClass::class);
+    }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class);
     }
 }
