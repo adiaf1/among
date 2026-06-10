@@ -368,6 +368,27 @@
                                 </li>
 
                                 @hasanyrole('admin|editor')
+                                <li class="menu-item {{ request()->is('master/*') ? 'active' : '' }}">
+                                    <a href="javascript:void(0)" class="menu-link menu-toggle">
+                                        <i class="menu-icon tf-icons bx bx-data"></i>
+                                        <div data-i18n="Master Data">Master Data</div>
+                                    </a>
+                                    <ul class="menu-sub">
+                                        <li class="menu-item {{ request()->routeIs('master.rice-varieties.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.rice-varieties.index') }}" class="menu-link">
+                                                <div data-i18n="Varietas Padi">Varietas Padi</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('master.seed-classes.*') ? 'active' : '' }}">
+                                            <a href="{{ route('master.seed-classes.index') }}" class="menu-link">
+                                                <div data-i18n="Kelas Benih">Kelas Benih</div>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                @endhasanyrole
+
+                                @hasanyrole('admin|editor')
                                 <!-- Users -->
                                 <li class="menu-item {{ request()->is('users','roles','permissions') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">
@@ -481,6 +502,37 @@
     <script src="{{ asset('assets/js/forms-selects.js') }}"></script>
     <script src="{{ asset('assets/js/forms-tagify.js') }}"></script>
     <script src="{{ asset('assets/js/forms-typeahead.js') }}"></script>
+
+    <script>
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+
+            if (!form.matches('[data-confirm-delete]') || form.dataset.confirmed === 'true') {
+                return;
+            }
+
+            event.preventDefault();
+
+            Swal.fire({
+                title: form.dataset.confirmTitle || 'Hapus data?',
+                text: form.dataset.confirmText || 'Data yang dihapus tidak dapat dikembalikan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    confirmButton: 'btn btn-danger me-2',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.dataset.confirmed = 'true';
+                    form.submit();
+                }
+            });
+        });
+    </script>
     
 </body>
 

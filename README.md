@@ -22,6 +22,7 @@ Among adalah baseline aplikasi Laravel untuk autentikasi, role, dan manajemen us
 - Edit profile dan hapus akun
 - Primary key user memakai UUID
 - Form auth/profile tidak memakai autofocus agar keyboard mobile tidak langsung terbuka
+- Master data Varietas Padi
 
 ## Instalasi
 
@@ -57,6 +58,12 @@ Jalankan migrasi dan seeder role/user:
 ```bash
 php artisan migrate
 php artisan db:seed --class=RoleSeeder
+```
+
+Seeder master varietas padi:
+
+```bash
+php artisan db:seed --class=RiceVarietySeeder
 ```
 
 Jika database lokal sebelumnya sudah pernah dibuat dengan integer ID, reset database agar schema UUID aktif:
@@ -111,6 +118,7 @@ php artisan test
 
 - `laravel/tinker` belum dipakai karena versi stabil yang tersedia masih konflik dengan Laravel 13 saat upgrade dilakukan.
 - Folder `public/build/` diabaikan oleh git karena merupakan hasil build Vite.
+- `RiceVarietySeeder` berisi 10 data awal varietas padi dan aman dijalankan ulang.
 
 ## Lisensi
 

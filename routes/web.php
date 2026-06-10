@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RiceVarietyController;
+use App\Http\Controllers\SeedClassController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,5 +33,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('users', UserController::class);
 });
+
+Route::middleware(['auth', 'role:admin|editor'])
+    ->prefix('master')
+    ->name('master.')
+    ->group(function () {
+        Route::resource('rice-varieties', RiceVarietyController::class);
+        Route::resource('seed-classes', SeedClassController::class);
+    });
 
 require __DIR__.'/auth.php';

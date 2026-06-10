@@ -93,10 +93,17 @@
                                             <button type="button" class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditUser{{ $user->id }}" data-user="{{ json_encode($user) }}">
                                                 <i class="bx bx-edit-alt me-1"></i> Edit
                                             </button>
-                                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline" id="delete-form-{{ $user->id }}">
+                                            <form
+                                                action="{{ route('users.destroy', $user) }}"
+                                                method="POST"
+                                                class="d-inline"
+                                                data-confirm-delete
+                                                data-confirm-title="Hapus pengguna?"
+                                                data-confirm-text="Data {{ $user->name }} akan dihapus dari sistem."
+                                            >
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="dropdown-item" onclick="confirmDelete({{ $user->id }})">
+                                                <button type="submit" class="dropdown-item text-danger">
                                                     <i class="bx bx-trash me-1"></i> Delete
                                                 </button>
                                             </form>
@@ -199,24 +206,6 @@
         }
     });
 
-    // Konfirmasi penghapusan pengguna
-    function confirmDelete(id) {
-        Swal.fire({
-            title: 'Apa Anda yakin?',
-            text: "Data pengguna ini akan dihapus!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Jika dikonfirmasi, submit form
-                document.getElementById('delete-form-' + id).submit();
-            }
-        });
-    }
 </script>
 
 @endsection
