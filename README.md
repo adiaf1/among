@@ -1,95 +1,110 @@
-# 👨‍💻 Laravel Multi-Role User Management
+# Among
 
-Proyek ini adalah sistem manajemen pengguna berbasis Laravel dengan autentikasi menggunakan **Laravel Breeze** dan manajemen peran menggunakan **Spatie Laravel Permission**.
+Among adalah aplikasi Laravel untuk manajemen pengguna multi-role. Autentikasi menggunakan Laravel Breeze, sedangkan role dan permission menggunakan Spatie Laravel Permission.
 
----
+## Tech Stack
 
-## 🚀 Langkah Instalasi
+- PHP 8.3+
+- Laravel 13.13
+- Laravel Breeze
+- Laravel Sanctum
+- Spatie Laravel Permission
+- Tailwind CSS
+- Alpine.js
+- Vite
 
-Ikuti langkah-langkah berikut setelah clone project ini:
+## Fitur
 
-### 1. Install Dependency
+- Autentikasi login, register, reset password, dan verifikasi email
+- Multi-role dengan Spatie Laravel Permission
+- Redirect dashboard berdasarkan role
+- Manajemen user untuk admin
+- Struktur awal siap dikembangkan menjadi sistem operasional yang lebih besar
+
+## Instalasi
+
+Clone project, lalu jalankan dependency PHP dan frontend:
 
 ```bash
 composer install
+npm ci
 ```
 
-### 2. Copy dan Konfigurasi `.env`
+Copy file environment:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` dan sesuaikan koneksi database:
+Sesuaikan konfigurasi database di `.env`:
 
-```
+```env
 DB_DATABASE=your_database
 DB_USERNAME=your_username
 DB_PASSWORD=your_password
 ```
 
-### 3. Generate App Key
+Generate application key:
 
 ```bash
 php artisan key:generate
 ```
 
-### 4. Jalankan Migrasi Database
+Jalankan migrasi dan seeder:
 
 ```bash
 php artisan migrate
-```
-
-### 5. Jalankan Seeder Role & User Awal
-
-```bash
 php artisan db:seed --class=RoleSeeder
 ```
 
-Seeder ini akan membuat 3 role (`admin`, `editor`, `guest`) dan masing-masing satu user default:
+Seeder role membuat user awal berikut:
 
-| Role  | Email             | Password |
-|-------|-------------------|----------|
-| Admin | admin@mail.com    | password |
-| Editor| editor@mail.com   | password |
-| Guest | guest@mail.com    | password |
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | admin@mail.com | password |
+| Editor | editor@mail.com | password |
+| Guest | guest@mail.com | password |
 
----
+## Menjalankan Aplikasi
 
-## 📦 Fitur
-
-- Laravel Breeze auth
-- Multi-role dengan Spatie Laravel Permission
-- Redirect otomatis berdasarkan role
-- Panel dashboard per role
-- Manajemen user khusus admin
-- Toastr notification
-
----
-
-## 🧑‍💻 Jalankan Aplikasi
+Jalankan server Laravel:
 
 ```bash
 php artisan serve
 ```
 
-Buka di browser:
+Jalankan Vite untuk development:
 
+```bash
+npm run dev
 ```
-http://localhost:8000
+
+Buka aplikasi di browser:
+
+```text
+http://127.0.0.1:8000
 ```
 
----
+Untuk build asset production:
 
-## 🛠 Tech Stack
+```bash
+npm run build
+```
 
-- Laravel 10
-- Laravel Breeze
-- Spatie Laravel Permission
-- Bootstrap 5 + Toastr
+## Testing
 
----
+Jalankan test:
 
-## 📄 Lisensi
+```bash
+php artisan test
+```
 
-MIT License – bebas digunakan, dimodifikasi, dan dikembangkan.
+Catatan saat upgrade Laravel 13.13:
+
+- `laravel/tinker` belum dipakai karena versi stabil yang tersedia masih konflik dengan Laravel 13.
+- Jika test view gagal karena `public/build/manifest.json` tidak ditemukan, jalankan `npm run build` terlebih dahulu.
+- Test bawaan profile delete membutuhkan method `destroy` di `ProfileController`.
+
+## Lisensi
+
+MIT License. Bebas digunakan, dimodifikasi, dan dikembangkan.
