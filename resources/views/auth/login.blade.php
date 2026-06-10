@@ -70,7 +70,7 @@
                         @csrf
                         <div class="mb-6">
                             <label for="email" class="form-label">Email / Username</label>
-                            <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" required autofocus />
+                            <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or username" required />
                         </div>
                         <div class="mb-6 form-password-toggle">
                             <label class="form-label" for="password">Password</label>
@@ -107,7 +107,6 @@
     <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
     <script src="{{ asset('assets/vendor/libs/@form-validation/popular.js') }}"></script>
     <script src="{{ asset('assets/vendor/libs/@form-validation/bootstrap5.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/@form-validation/auto-focus.js') }}"></script>
     <script src="{{ asset('assets/js/main.js') }}"></script>
     <script src="{{ asset('assets/js/pages-auth.js') }}"></script>
 </body>

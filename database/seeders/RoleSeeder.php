@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
-use App\Models\User;
 
 class RoleSeeder extends Seeder
 {
@@ -14,34 +13,27 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat roles
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'editor']);
-        Role::create(['name' => 'guest']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $editorRole = Role::firstOrCreate(['name' => 'editor']);
+        $guestRole = Role::firstOrCreate(['name' => 'guest']);
 
-        // Buat user admin
-        $admin = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@mail.com',
-            'password' => bcrypt('123456'),
-        ]);
-        $admin->assignRole('admin');
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@mail.com'],
+            ['name' => 'Admin', 'password' => bcrypt('123456')]
+        );
+        $admin->syncRoles([$adminRole]);
 
-        // Buat user editor
-        $editor = User::create([
-            'name' => 'Editor',
-            'email' => 'editor@mail.com',
-            'password' => bcrypt('123456'),
-        ]);
-        $editor->assignRole('editor');
+        $editor = User::updateOrCreate(
+            ['email' => 'editor@mail.com'],
+            ['name' => 'Editor', 'password' => bcrypt('123456')]
+        );
+        $editor->syncRoles([$editorRole]);
 
-        // Buat user guest
-        $guest = User::create([
-            'name' => 'Guest',
-            'email' => 'guest@mail.com',
-            'password' => bcrypt('123456'),
-        ]);
-        $guest->assignRole('guest');
+        $guest = User::updateOrCreate(
+            ['email' => 'guest@mail.com'],
+            ['name' => 'Guest', 'password' => bcrypt('123456')]
+        );
+        $guest->syncRoles([$guestRole]);
     }
 
 }

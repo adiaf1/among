@@ -1,6 +1,6 @@
 # Among
 
-Among adalah aplikasi Laravel untuk manajemen pengguna multi-role. Autentikasi menggunakan Laravel Breeze, sedangkan role dan permission menggunakan Spatie Laravel Permission.
+Among adalah baseline aplikasi Laravel untuk autentikasi, role, dan manajemen user. Proyek ini sengaja dibuat ringan sebagai titik awal sebelum modul bisnis baru dibangun.
 
 ## Tech Stack
 
@@ -13,17 +13,19 @@ Among adalah aplikasi Laravel untuk manajemen pengguna multi-role. Autentikasi m
 - Alpine.js
 - Vite
 
-## Fitur
+## Fitur Saat Ini
 
-- Autentikasi login, register, reset password, dan verifikasi email
-- Multi-role dengan Spatie Laravel Permission
-- Redirect dashboard berdasarkan role
+- Login, register, reset password, dan verifikasi email
+- Dashboard berdasarkan role
+- Role awal: `admin`, `editor`, dan `guest`
 - Manajemen user untuk admin
-- Struktur awal siap dikembangkan menjadi sistem operasional yang lebih besar
+- Edit profile dan hapus akun
+- Primary key user memakai UUID
+- Form auth/profile tidak memakai autofocus agar keyboard mobile tidak langsung terbuka
 
 ## Instalasi
 
-Clone project, lalu jalankan dependency PHP dan frontend:
+Install dependency PHP dan frontend:
 
 ```bash
 composer install
@@ -50,20 +52,26 @@ Generate application key:
 php artisan key:generate
 ```
 
-Jalankan migrasi dan seeder:
+Jalankan migrasi dan seeder role/user:
 
 ```bash
 php artisan migrate
 php artisan db:seed --class=RoleSeeder
 ```
 
-Seeder role membuat user awal berikut:
+Jika database lokal sebelumnya sudah pernah dibuat dengan integer ID, reset database agar schema UUID aktif:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+User awal:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Admin | admin@mail.com | password |
-| Editor | editor@mail.com | password |
-| Guest | guest@mail.com | password |
+| Admin | admin@mail.com | 123456 |
+| Editor | editor@mail.com | 123456 |
+| Guest | guest@mail.com | 123456 |
 
 ## Menjalankan Aplikasi
 
@@ -79,7 +87,7 @@ Jalankan Vite untuk development:
 npm run dev
 ```
 
-Buka aplikasi di browser:
+Buka aplikasi:
 
 ```text
 http://127.0.0.1:8000
@@ -99,11 +107,10 @@ Jalankan test:
 php artisan test
 ```
 
-Catatan saat upgrade Laravel 13.13:
+## Catatan
 
-- `laravel/tinker` belum dipakai karena versi stabil yang tersedia masih konflik dengan Laravel 13.
-- Jika test view gagal karena `public/build/manifest.json` tidak ditemukan, jalankan `npm run build` terlebih dahulu.
-- Test bawaan profile delete membutuhkan method `destroy` di `ProfileController`.
+- `laravel/tinker` belum dipakai karena versi stabil yang tersedia masih konflik dengan Laravel 13 saat upgrade dilakukan.
+- Folder `public/build/` diabaikan oleh git karena merupakan hasil build Vite.
 
 ## Lisensi
 
