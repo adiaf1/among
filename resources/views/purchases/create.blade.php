@@ -402,6 +402,10 @@
             supplier: @json($supplierOptions),
             farmer: @json($farmerOptions),
         };
+        const sourceCreateUrls = {
+            supplier: @json(route('master.suppliers.create', ['return_to' => route('purchases.create')])),
+            farmer: @json(route('master.farmers.create', ['return_to' => route('purchases.create')])),
+        };
         const freeComboboxData = {
             transport_type: @json($transportTypeOptions),
             vehicle_plate_number: @json($vehiclePlateOptions),
@@ -493,9 +497,19 @@
 
                 if (!filteredOptions.length) {
                     const empty = document.createElement('div');
+                    const createLink = document.createElement('a');
+
                     empty.className = 'text-muted small px-2 py-2';
-                    empty.textContent = 'Data tidak ditemukan';
+                    empty.textContent = type === 'supplier' ? 'Supplier tidak ditemukan' : 'Petani tidak ditemukan';
                     menu.appendChild(empty);
+
+                    createLink.href = sourceCreateUrls[type];
+                    createLink.className = 'btn btn-sm btn-primary w-100 mt-1';
+                    createLink.innerHTML = type === 'supplier'
+                        ? '<i class="bx bx-plus me-1"></i> Tambah Supplier'
+                        : '<i class="bx bx-plus me-1"></i> Tambah Petani';
+                    menu.appendChild(createLink);
+
                     menu.classList.remove('d-none');
                     return;
                 }
