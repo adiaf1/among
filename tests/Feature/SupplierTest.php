@@ -36,7 +36,6 @@ class SupplierTest extends TestCase
         $editor = $this->userWithRole('editor');
 
         $response = $this->actingAs($editor)->post(route('master.suppliers.store'), [
-            'code' => 'SUP002',
             'name' => 'Tani Jaya Sejahtera',
             'contact_person' => 'Hendra Saputra',
             'phone' => '081234560002',
@@ -48,10 +47,52 @@ class SupplierTest extends TestCase
 
         $response->assertRedirect(route('master.suppliers.index'));
         $this->assertDatabaseHas('suppliers', [
-            'code' => 'SUP002',
+            'code' => 'SUP001',
             'name' => 'Tani Jaya Sejahtera',
             'is_active' => true,
         ]);
+    }
+
+    public function test_supplier_code_is_generated_from_latest_number(): void
+    {
+        $editor = $this->userWithRole('editor');
+
+        Supplier::create([
+            'code' => 'SUP005',
+            'name' => 'Supplier Lama',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($editor)->post(route('master.suppliers.store'), [
+            'name' => 'Supplier Berikutnya',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('master.suppliers.index'));
+        $this->assertDatabaseHas('suppliers', [
+            'code' => 'SUP006',
+            'name' => 'Supplier Berikutnya',
+        ]);
+    }
+
+    public function test_supplier_created_from_purchase_redirects_back_to_purchase_create(): void
+    {
+        $editor = $this->userWithRole('editor');
+
+        $response = $this->actingAs($editor)->post(route('master.suppliers.store'), [
+            'name' => 'Supplier Baru',
+            'contact_person' => 'Dina',
+            'phone' => '081234560005',
+            'return_to' => 'purchases.create',
+            'is_active' => '1',
+        ]);
+
+        $supplier = Supplier::where('name', 'Supplier Baru')->first();
+
+        $response->assertRedirect(route('purchases.create', [
+            'source_type' => 'supplier',
+            'supplier_id' => $supplier->id,
+        ]));
     }
 
     public function test_admin_can_update_supplier(): void

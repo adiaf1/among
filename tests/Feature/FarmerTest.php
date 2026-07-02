@@ -34,7 +34,6 @@ class FarmerTest extends TestCase
         $editor = $this->userWithRole('editor');
 
         $response = $this->actingAs($editor)->post(route('master.farmers.store'), [
-            'code' => 'PTR002',
             'name' => 'Siti Aminah',
             'phone' => '082233445566',
             'identity_number' => '3201010101010001',
@@ -45,10 +44,51 @@ class FarmerTest extends TestCase
 
         $response->assertRedirect(route('master.farmers.index'));
         $this->assertDatabaseHas('farmers', [
-            'code' => 'PTR002',
+            'code' => 'PTR001',
             'name' => 'Siti Aminah',
             'is_active' => true,
         ]);
+    }
+
+    public function test_farmer_code_is_generated_from_latest_number(): void
+    {
+        $editor = $this->userWithRole('editor');
+
+        Farmer::create([
+            'code' => 'PTR005',
+            'name' => 'Petani Lama',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($editor)->post(route('master.farmers.store'), [
+            'name' => 'Petani Berikutnya',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('master.farmers.index'));
+        $this->assertDatabaseHas('farmers', [
+            'code' => 'PTR006',
+            'name' => 'Petani Berikutnya',
+        ]);
+    }
+
+    public function test_farmer_created_from_purchase_redirects_back_to_purchase_create(): void
+    {
+        $editor = $this->userWithRole('editor');
+
+        $response = $this->actingAs($editor)->post(route('master.farmers.store'), [
+            'name' => 'Petani Baru',
+            'phone' => '082233445500',
+            'return_to' => 'purchases.create',
+            'is_active' => '1',
+        ]);
+
+        $farmer = Farmer::where('name', 'Petani Baru')->first();
+
+        $response->assertRedirect(route('purchases.create', [
+            'source_type' => 'farmer',
+            'farmer_id' => $farmer->id,
+        ]));
     }
 
     public function test_admin_can_update_farmer(): void

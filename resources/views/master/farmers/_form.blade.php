@@ -1,21 +1,22 @@
 @csrf
 
+@if(request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create')
+    <input type="hidden" name="return_to" value="purchases.create">
+@endif
+
 <div class="row g-4">
     <div class="col-md-4">
-        <label for="code" class="form-label">Kode <span class="text-danger">*</span></label>
+        <label for="code" class="form-label">Kode</label>
         <input
             type="text"
-            class="form-control @error('code') is-invalid @enderror"
+            class="form-control"
             id="code"
-            name="code"
-            value="{{ old('code', $farmer->code ?? '') }}"
-            required
+            value="{{ $farmer->code ?? $nextCode ?? 'Otomatis' }}"
+            readonly
             maxlength="50"
-            placeholder="Contoh: PTR001"
+            placeholder="Otomatis"
         >
-        @error('code')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+        <div class="form-text">Kode petani dibuat otomatis saat data disimpan.</div>
     </div>
 
     <div class="col-md-8">
@@ -112,6 +113,6 @@
 </div>
 
 <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-5">
-    <a href="{{ route('master.farmers.index') }}" class="btn btn-label-secondary">Batal</a>
+    <a href="{{ (request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create') ? route('purchases.create', ['source_type' => 'farmer']) : route('master.farmers.index') }}" class="btn btn-label-secondary">Batal</a>
     <button type="submit" class="btn btn-primary">Simpan</button>
 </div>

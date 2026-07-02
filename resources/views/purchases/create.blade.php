@@ -7,15 +7,24 @@
         <p class="text-muted mb-0">Barang yang disimpan akan langsung menambah stok gudang tujuan.</p>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ route('purchases.store') }}">
                 @csrf
 
                 @php
-                    $selectedSourceType = old('source_type', old('farmer_id') ? 'farmer' : 'supplier');
-                    $selectedSupplier = $suppliers->firstWhere('id', old('supplier_id'));
-                    $selectedFarmer = $farmers->firstWhere('id', old('farmer_id'));
+                    $selectedSourceType = old('source_type', request('source_type', request('farmer_id') ? 'farmer' : 'supplier'));
+                    $selectedSupplierId = old('supplier_id', request('supplier_id'));
+                    $selectedFarmerId = old('farmer_id', request('farmer_id'));
+                    $selectedSupplier = $suppliers->firstWhere('id', $selectedSupplierId);
+                    $selectedFarmer = $farmers->firstWhere('id', $selectedFarmerId);
                     $supplierOptions = $suppliers->map(fn ($supplier) => [
                         'value' => $supplier->id,
                         'code' => $supplier->code,
@@ -153,7 +162,7 @@
                     <div class="col-md-6" data-source-field="supplier">
                         <label for="supplier_id" class="form-label">Supplier <span class="text-danger">*</span></label>
                         <div class="source-combobox position-relative" data-source-combobox="supplier">
-                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ old('supplier_id') }}">
+                            <input type="hidden" id="supplier_id" name="supplier_id" value="{{ $selectedSupplierId }}">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bx bx-search"></i></span>
                                 <input
@@ -179,7 +188,7 @@
                     <div class="col-md-6" data-source-field="farmer">
                         <label for="farmer_id" class="form-label">Petani <span class="text-danger">*</span></label>
                         <div class="source-combobox position-relative" data-source-combobox="farmer">
-                            <input type="hidden" id="farmer_id" name="farmer_id" value="{{ old('farmer_id') }}">
+                            <input type="hidden" id="farmer_id" name="farmer_id" value="{{ $selectedFarmerId }}">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bx bx-search"></i></span>
                                 <input
@@ -219,7 +228,7 @@
 
                 @php
                     $oldItems = old('items', [
-                        ['item_id' => '', 'warehouse_id' => '', 'quantity' => '', 'unit_price' => 0],
+                        ['item_id' => request('item_id', ''), 'warehouse_id' => '', 'quantity' => '', 'unit_price' => 0],
                     ]);
                 @endphp
 
@@ -230,36 +239,54 @@
                     </button>
                 </div>
 
-                <div class="table-responsive text-nowrap mb-4">
+                <div class="table-responsive mb-4">
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
                                 <th style="min-width: 260px;">Barang</th>
                                 <th style="min-width: 240px;">Gudang Tujuan</th>
-                                <th style="min-width: 140px;">Jumlah (Kg)</th>
-                                <th style="min-width: 160px;">Harga (/Kg)</th>
+                                <th style="min-width: 140px;">Jumlah</th>
+                                <th style="min-width: 160px;">Harga Satuan</th>
                                 <th style="width: 72px;" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="purchase-items-body">
                             @foreach($oldItems as $index => $oldItem)
+                                @php
+                                    $selectedItem = $items->firstWhere('id', $oldItem['item_id'] ?? '');
+                                    $selectedItemLabel = '';
+                                    $selectedItemUnit = '';
+
+                                    if ($selectedItem) {
+                                        $categoryLabel = $itemCategories[$selectedItem->category] ?? ucfirst(str_replace('_', ' ', $selectedItem->category));
+                                        $stateLabel = $itemMaterialStates[$selectedItem->material_state ?? 'none'] ?? ucfirst(str_replace('_', ' ', $selectedItem->material_state ?? 'none'));
+                                        $itemLabel = ($selectedItem->material_state ?? 'none') === 'none' ? $categoryLabel : "{$categoryLabel} - {$stateLabel}";
+                                        $selectedItemLabel = "{$selectedItem->code} - {$selectedItem->name} [{$itemLabel}] (".strtoupper($selectedItem->unit).")";
+                                        $selectedItemUnit = strtoupper($selectedItem->unit);
+                                    }
+                                @endphp
                                 <tr data-purchase-item-row>
                                     <td>
-                                        <select
-                                            data-field="item_id"
-                                            class="form-select @error("items.$index.item_id") is-invalid @enderror"
-                                            name="items[{{ $index }}][item_id]"
-                                            required
-                                        >
-                                            <option value="">Pilih barang</option>
-                                            @foreach($items as $item)
-                                                <option value="{{ $item->id }}" @selected(($oldItem['item_id'] ?? '') === $item->id)>
-                                                    {{ $item->code }} - {{ $item->name }} ({{ strtoupper($item->unit) }})
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <div class="source-combobox position-relative" data-item-combobox>
+                                            <input type="hidden" data-field="item_id" name="items[{{ $index }}][item_id]" value="{{ $oldItem['item_id'] ?? '' }}">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                                <input
+                                                    type="search"
+                                                    class="form-control @error("items.$index.item_id") is-invalid @enderror"
+                                                    value="{{ $selectedItemLabel }}"
+                                                    placeholder="Cari barang"
+                                                    autocomplete="off"
+                                                    data-combobox-input
+                                                >
+                                                <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
+                                                    <i class="bx bx-x"></i>
+                                                </button>
+                                            </div>
+                                            <div class="source-combobox-menu d-none" data-combobox-menu></div>
+                                        </div>
                                         @error("items.$index.item_id")
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
                                     </td>
                                     <td>
@@ -292,6 +319,7 @@
                                             step="0.01"
                                             required
                                         >
+                                        <div class="form-text" data-unit-label>{{ $selectedItemUnit ? "Satuan: {$selectedItemUnit}" : 'Pilih barang untuk melihat satuan.' }}</div>
                                         @error("items.$index.quantity")
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -307,6 +335,7 @@
                                             data-money-input
                                             required
                                         >
+                                        <div class="form-text" data-unit-price-label>{{ $selectedItemUnit ? "Per {$selectedItemUnit}" : 'Harga per satuan barang.' }}</div>
                                         @error("items.$index.unit_price")
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -338,6 +367,7 @@
         width: 100%;
         max-height: 260px;
         overflow-y: auto;
+        white-space: normal;
         margin-top: 0.25rem;
         padding: 0.35rem;
         background: var(--bs-body-bg);
@@ -347,6 +377,7 @@
     }
 
     .source-combobox-option {
+        display: block;
         width: 100%;
         padding: 0.55rem 0.65rem;
         border: 0;
@@ -354,6 +385,7 @@
         background: transparent;
         color: var(--bs-body-color);
         text-align: left;
+        white-space: normal;
     }
 
     .source-combobox-option:hover,
@@ -388,12 +420,25 @@
     }
 </style>
 
+@php
+    $itemOptionData = $items->map(function ($item) use ($itemCategories, $itemMaterialStates) {
+        $categoryLabel = $itemCategories[$item->category] ?? ucfirst(str_replace('_', ' ', $item->category));
+        $stateLabel = $itemMaterialStates[$item->material_state ?? 'none'] ?? ucfirst(str_replace('_', ' ', $item->material_state ?? 'none'));
+        $itemLabel = ($item->material_state ?? 'none') === 'none' ? $categoryLabel : "{$categoryLabel} - {$stateLabel}";
+
+        return [
+            'value' => $item->id,
+            'code' => $item->code,
+            'name' => $item->name,
+            'unit' => strtoupper($item->unit),
+            'label' => sprintf('%s - %s [%s] (%s)', $item->code, $item->name, $itemLabel, strtoupper($item->unit)),
+        ];
+    })->values();
+@endphp
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const itemOptions = @json($items->map(fn ($item) => [
-            'value' => $item->id,
-            'label' => "{$item->code} - {$item->name} (".strtoupper($item->unit).")",
-        ])->values());
+        const itemOptions = @json($itemOptionData);
         const warehouseOptions = @json($warehouses->map(fn ($warehouse) => [
             'value' => $warehouse->id,
             'label' => "{$warehouse->code} - {$warehouse->name}",
@@ -403,9 +448,10 @@
             farmer: @json($farmerOptions),
         };
         const sourceCreateUrls = {
-            supplier: @json(route('master.suppliers.create', ['return_to' => route('purchases.create')])),
-            farmer: @json(route('master.farmers.create', ['return_to' => route('purchases.create')])),
+            supplier: @json(route('master.suppliers.create', ['return_to' => 'purchases.create'])),
+            farmer: @json(route('master.farmers.create', ['return_to' => 'purchases.create'])),
         };
+        const itemCreateUrl = @json(route('master.items.create', ['return_to' => 'purchases.create']));
         const freeComboboxData = {
             transport_type: @json($transportTypeOptions),
             vehicle_plate_number: @json($vehiclePlateOptions),
@@ -685,6 +731,133 @@
             ].join('');
         };
 
+        const itemByValue = function (value) {
+            return itemOptions.find(function (option) {
+                return option.value === value;
+            });
+        };
+
+        const updateRowUnit = function (row, item) {
+            const quantityUnit = row.querySelector('[data-unit-label]');
+            const priceUnit = row.querySelector('[data-unit-price-label]');
+
+            if (!quantityUnit || !priceUnit) {
+                return;
+            }
+
+            if (!item) {
+                quantityUnit.textContent = 'Pilih barang untuk melihat satuan.';
+                priceUnit.textContent = 'Harga per satuan barang.';
+                return;
+            }
+
+            quantityUnit.textContent = `Satuan: ${item.unit}`;
+            priceUnit.textContent = `Per ${item.unit}`;
+        };
+
+        const initItemCombobox = function (root) {
+            if (root.dataset.initialized === 'true') {
+                return;
+            }
+
+            root.dataset.initialized = 'true';
+
+            const row = root.closest('[data-purchase-item-row]');
+            const hiddenInput = root.querySelector('input[type="hidden"]');
+            const searchInput = root.querySelector('[data-combobox-input]');
+            const clearButton = root.querySelector('[data-combobox-clear]');
+            const menu = root.querySelector('[data-combobox-menu]');
+
+            const closeMenu = function () {
+                menu.classList.add('d-none');
+            };
+
+            const normalize = function (value) {
+                return (value || '').toString().toLowerCase();
+            };
+
+            const renderOptions = function () {
+                const term = normalize(searchInput.value);
+                const filteredOptions = itemOptions.filter(function (option) {
+                    return normalize(option.label).includes(term)
+                        || normalize(option.code).includes(term)
+                        || normalize(option.name).includes(term);
+                }).slice(0, 30);
+
+                menu.innerHTML = '';
+
+                if (!filteredOptions.length) {
+                    const empty = document.createElement('div');
+                    const createLink = document.createElement('a');
+
+                    empty.className = 'text-muted small px-2 py-2';
+                    empty.textContent = 'Barang tidak ditemukan';
+                    menu.appendChild(empty);
+
+                    createLink.href = itemCreateUrl;
+                    createLink.className = 'btn btn-sm btn-primary w-100 mt-1';
+                    createLink.innerHTML = '<i class="bx bx-plus me-1"></i> Tambah Barang';
+                    menu.appendChild(createLink);
+
+                    menu.classList.remove('d-none');
+                    return;
+                }
+
+                filteredOptions.forEach(function (option) {
+                    const button = document.createElement('button');
+                    const title = document.createElement('div');
+                    const meta = document.createElement('div');
+
+                    button.type = 'button';
+                    button.className = 'source-combobox-option';
+                    title.className = 'fw-medium';
+                    title.textContent = `${option.code} - ${option.name}`;
+                    meta.className = 'text-muted small';
+                    meta.textContent = option.label.replace(`${option.code} - ${option.name} `, '');
+
+                    button.appendChild(title);
+                    button.appendChild(meta);
+
+                    button.addEventListener('click', function () {
+                        hiddenInput.value = option.value;
+                        searchInput.value = option.label;
+                        updateRowUnit(row, option);
+                        closeMenu();
+                    });
+
+                    menu.appendChild(button);
+                });
+
+                menu.classList.remove('d-none');
+            };
+
+            searchInput.addEventListener('focus', renderOptions);
+            searchInput.addEventListener('input', function () {
+                hiddenInput.value = '';
+                updateRowUnit(row, null);
+                renderOptions();
+            });
+            searchInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeMenu();
+                }
+            });
+            clearButton.addEventListener('click', function () {
+                hiddenInput.value = '';
+                searchInput.value = '';
+                updateRowUnit(row, null);
+                searchInput.focus();
+                renderOptions();
+            });
+            document.addEventListener('click', function (event) {
+                if (!root.contains(event.target)) {
+                    closeMenu();
+                }
+            });
+
+            updateRowUnit(row, itemByValue(hiddenInput.value));
+        };
+
         const bindMoneyInput = function (input) {
             input.value = formatNumber(input.value);
 
@@ -710,9 +883,17 @@
             row.dataset.purchaseItemRow = '';
             row.innerHTML = `
                 <td>
-                    <select class="form-select" data-field="item_id" required>
-                        ${optionHtml(itemOptions, 'Pilih barang')}
-                    </select>
+                    <div class="source-combobox position-relative" data-item-combobox>
+                        <input type="hidden" data-field="item_id">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bx bx-search"></i></span>
+                            <input type="search" class="form-control" placeholder="Cari barang" autocomplete="off" data-combobox-input>
+                            <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </div>
+                        <div class="source-combobox-menu d-none" data-combobox-menu></div>
+                    </div>
                 </td>
                 <td>
                     <select class="form-select" data-field="warehouse_id" required>
@@ -721,9 +902,11 @@
                 </td>
                 <td>
                     <input type="number" class="form-control" data-field="quantity" min="0.01" max="9999999999.99" step="0.01" required>
+                    <div class="form-text" data-unit-label>Pilih barang untuk melihat satuan.</div>
                 </td>
                 <td>
                     <input type="text" inputmode="numeric" class="form-control" data-field="unit_price" data-money-input required>
+                    <div class="form-text" data-unit-price-label>Harga per satuan barang.</div>
                 </td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-icon btn-label-danger" data-remove-row title="Hapus baris">
@@ -733,10 +916,12 @@
             `;
 
             bindMoneyInput(row.querySelector('[data-money-input]'));
+            initItemCombobox(row.querySelector('[data-item-combobox]'));
 
             return row;
         };
 
+        document.querySelectorAll('[data-item-combobox]').forEach(initItemCombobox);
         document.querySelectorAll('[data-money-input]').forEach(bindMoneyInput);
         sourceType?.addEventListener('change', syncSourceFields);
 

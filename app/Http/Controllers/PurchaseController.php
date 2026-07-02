@@ -17,6 +17,25 @@ use Illuminate\View\View;
 
 class PurchaseController extends Controller
 {
+    private const ITEM_CATEGORIES = [
+        'benih' => 'Benih',
+        'gabah' => 'Gabah',
+        'karung' => 'Karung',
+        'plastik' => 'Plastik',
+        'benang_karung' => 'Benang Karung',
+        'kemasan' => 'Kemasan',
+        'bahan_produksi' => 'Bahan Produksi',
+        'lainnya' => 'Lainnya',
+    ];
+
+    private const ITEM_MATERIAL_STATES = [
+        'none' => 'Tidak Ada',
+        'basah' => 'Basah',
+        'kering' => 'Kering',
+        'benih_jadi' => 'Benih Jadi',
+        'bahan_pendukung' => 'Bahan Pendukung',
+    ];
+
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
@@ -49,6 +68,8 @@ class PurchaseController extends Controller
             'transportTypes' => $this->distinctPurchaseValues('transport_type'),
             'vehiclePlateNumbers' => $this->distinctPurchaseValues('vehicle_plate_number'),
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
+            'itemCategories' => self::ITEM_CATEGORIES,
+            'itemMaterialStates' => self::ITEM_MATERIAL_STATES,
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
@@ -167,7 +188,11 @@ class PurchaseController extends Controller
     {
         $purchase->load(['supplier', 'farmer', 'items.item', 'items.warehouse', 'creator']);
 
-        return view('purchases.show', compact('purchase'));
+        return view('purchases.show', [
+            'purchase' => $purchase,
+            'itemCategories' => self::ITEM_CATEGORIES,
+            'itemMaterialStates' => self::ITEM_MATERIAL_STATES,
+        ]);
     }
 
     private function generateNumber(): string

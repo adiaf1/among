@@ -22,6 +22,7 @@ class ItemTest extends TestCase
             'code' => 'BRG001',
             'name' => 'Benih Padi Ciherang ES',
             'category' => 'benih',
+            'material_state' => 'benih_jadi',
             'unit' => 'kg',
             'minimum_stock' => 500,
             'is_active' => true,
@@ -51,6 +52,7 @@ class ItemTest extends TestCase
             'code' => 'BRG002',
             'name' => 'Benih Padi Ciherang ES',
             'category' => 'benih',
+            'material_state' => 'benih_jadi',
             'unit' => 'kg',
             'rice_variety_id' => $riceVariety->id,
             'seed_class_id' => $seedClass->id,
@@ -64,6 +66,7 @@ class ItemTest extends TestCase
             'code' => 'BRG002',
             'name' => 'Benih Padi Ciherang ES',
             'category' => 'benih',
+            'material_state' => 'benih_jadi',
             'unit' => 'kg',
             'rice_variety_id' => $riceVariety->id,
             'seed_class_id' => $seedClass->id,
@@ -77,7 +80,8 @@ class ItemTest extends TestCase
         $item = Item::create([
             'code' => 'BRG003',
             'name' => 'Karung Kemasan 5 Kg',
-            'category' => 'kemasan',
+            'category' => 'karung',
+            'material_state' => 'bahan_pendukung',
             'unit' => 'pcs',
             'minimum_stock' => 200,
             'is_active' => true,
@@ -86,7 +90,8 @@ class ItemTest extends TestCase
         $response = $this->actingAs($admin)->put(route('master.items.update', $item), [
             'code' => 'BRG003',
             'name' => 'Karung Kemasan 10 Kg',
-            'category' => 'kemasan',
+            'category' => 'karung',
+            'material_state' => 'bahan_pendukung',
             'unit' => 'pcs',
             'minimum_stock' => 300,
             'is_active' => '0',
@@ -100,6 +105,29 @@ class ItemTest extends TestCase
         ]);
     }
 
+    public function test_item_created_from_purchase_redirects_back_to_purchase_create(): void
+    {
+        $editor = $this->userWithRole('editor');
+
+        $response = $this->actingAs($editor)->post(route('master.items.store'), [
+            'code' => 'BRG005',
+            'name' => 'Plastik Inner Kemasan',
+            'category' => 'plastik',
+            'material_state' => 'bahan_pendukung',
+            'unit' => 'PCS',
+            'minimum_stock' => 500,
+            'is_active' => '1',
+            'return_to' => 'purchases.create',
+        ]);
+
+        $item = Item::where('code', 'BRG005')->firstOrFail();
+
+        $response->assertRedirect(route('purchases.create', [
+            'item_id' => $item->id,
+        ]));
+        $this->assertSame('pcs', $item->unit);
+    }
+
     public function test_admin_can_delete_item(): void
     {
         $admin = $this->userWithRole('admin');
@@ -107,6 +135,7 @@ class ItemTest extends TestCase
             'code' => 'BRG004',
             'name' => 'Label Sertifikasi Benih',
             'category' => 'kemasan',
+            'material_state' => 'bahan_pendukung',
             'unit' => 'pcs',
             'is_active' => true,
         ]);

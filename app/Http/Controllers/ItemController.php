@@ -15,16 +15,30 @@ class ItemController extends Controller
     private const CATEGORIES = [
         'benih' => 'Benih',
         'gabah' => 'Gabah',
+        'karung' => 'Karung',
+        'plastik' => 'Plastik',
+        'benang_karung' => 'Benang Karung',
         'kemasan' => 'Kemasan',
         'bahan_produksi' => 'Bahan Produksi',
         'lainnya' => 'Lainnya',
     ];
 
+    private const MATERIAL_STATES = [
+        'none' => 'Tidak Ada',
+        'basah' => 'Basah',
+        'kering' => 'Kering',
+        'benih_jadi' => 'Benih Jadi',
+        'bahan_pendukung' => 'Bahan Pendukung',
+    ];
+
     private const UNITS = [
-        'kg' => 'Kg',
-        'pcs' => 'Pcs',
-        'karung' => 'Karung',
-        'liter' => 'Liter',
+        'kg',
+        'pcs',
+        'karung',
+        'roll',
+        'liter',
+        'meter',
+        'pack',
     ];
 
     public function index(Request $request): View
@@ -38,6 +52,7 @@ class ItemController extends Controller
                     $query->where('code', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhere('material_state', 'like', "%{$search}%")
                         ->orWhere('unit', 'like', "%{$search}%");
                 });
             })
@@ -49,6 +64,7 @@ class ItemController extends Controller
             'items' => $items,
             'search' => $search,
             'categories' => self::CATEGORIES,
+            'materialStates' => self::MATERIAL_STATES,
         ]);
     }
 
@@ -59,10 +75,18 @@ class ItemController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->normalizeUnit($request);
+
         $validated = $request->validate($this->rules());
         $validated['is_active'] = $request->boolean('is_active');
 
-        Item::create($validated);
+        $item = Item::create($validated);
+
+        if ($request->input('return_to') === 'purchases.create') {
+            return redirect()
+                ->route('purchases.create', ['item_id' => $item->id])
+                ->with('success', 'Data barang berhasil ditambahkan. Barang baru sudah dipilih di detail pembelian.');
+        }
 
         return redirect()
             ->route('master.items.index')
@@ -76,6 +100,7 @@ class ItemController extends Controller
         return view('master.items.show', [
             'item' => $item,
             'categories' => self::CATEGORIES,
+            'materialStates' => self::MATERIAL_STATES,
         ]);
     }
 
@@ -86,6 +111,8 @@ class ItemController extends Controller
 
     public function update(Request $request, Item $item): RedirectResponse
     {
+        $this->normalizeUnit($request);
+
         $validated = $request->validate($this->rules($item));
         $validated['is_active'] = $request->boolean('is_active');
 
@@ -110,7 +137,8 @@ class ItemController extends Controller
         return view($view, [
             'item' => $item,
             'categories' => self::CATEGORIES,
-            'units' => self::UNITS,
+            'materialStates' => self::MATERIAL_STATES,
+            'unitOptions' => $this->unitOptions(),
             'riceVarieties' => RiceVariety::where('is_active', true)->orderBy('name')->get(),
             'seedClasses' => SeedClass::where('is_active', true)->orderBy('name')->get(),
         ]);
@@ -127,6 +155,7 @@ class ItemController extends Controller
             ],
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', Rule::in(array_keys(self::CATEGORIES))],
+            'material_state' => ['required', 'string', Rule::in(array_keys(self::MATERIAL_STATES))],
             'unit' => ['required', 'string', 'max:50'],
             'rice_variety_id' => ['nullable', 'uuid', 'exists:rice_varieties,id'],
             'seed_class_id' => ['nullable', 'uuid', 'exists:seed_classes,id'],
@@ -134,5 +163,31 @@ class ItemController extends Controller
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
         ];
+    }
+
+    private function normalizeUnit(Request $request): void
+    {
+        if (! $request->filled('unit')) {
+            return;
+        }
+
+        $request->merge([
+            'unit' => mb_strtolower(preg_replace('/\s+/', ' ', trim((string) $request->input('unit')))),
+        ]);
+    }
+
+    private function unitOptions()
+    {
+        return collect(self::UNITS)
+            ->merge(Item::query()
+                ->whereNotNull('unit')
+                ->where('unit', '!=', '')
+                ->distinct()
+                ->orderBy('unit')
+                ->pluck('unit'))
+            ->map(fn ($unit) => trim((string) $unit))
+            ->filter()
+            ->unique(fn ($unit) => mb_strtolower($unit))
+            ->values();
     }
 }

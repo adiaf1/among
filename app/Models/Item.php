@@ -20,6 +20,7 @@ class Item extends Model
         'code',
         'name',
         'category',
+        'material_state',
         'unit',
         'rice_variety_id',
         'seed_class_id',

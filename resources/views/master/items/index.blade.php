@@ -28,7 +28,7 @@
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Cari kode, nama, kategori, atau satuan"
+                        placeholder="Cari kode, nama, kategori, kondisi, atau satuan"
                     >
                 </div>
                 <div class="col-md-auto d-flex gap-2">
@@ -46,7 +46,7 @@
                     <tr>
                         <th>Kode</th>
                         <th>Nama Barang</th>
-                        <th>Kategori</th>
+                        <th>Kategori / Kondisi</th>
                         <th>Satuan</th>
                         <th>Varietas / Kelas</th>
                         <th>Stok Minimum</th>
@@ -59,7 +59,12 @@
                         <tr>
                             <td><span class="fw-medium">{{ $item->code }}</span></td>
                             <td>{{ $item->name }}</td>
-                            <td>{{ $categories[$item->category] ?? ucfirst($item->category) }}</td>
+                            <td>
+                                {{ $categories[$item->category] ?? ucfirst(str_replace('_', ' ', $item->category)) }}
+                                @if(($item->material_state ?? 'none') !== 'none')
+                                    <div class="text-muted small">{{ $materialStates[$item->material_state] ?? ucfirst(str_replace('_', ' ', $item->material_state)) }}</div>
+                                @endif
+                            </td>
                             <td>{{ strtoupper($item->unit) }}</td>
                             <td>
                                 @if($item->riceVariety || $item->seedClass)

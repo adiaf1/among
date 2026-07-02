@@ -23,7 +23,10 @@
                 <dd class="col-sm-9">{{ $item->name }}</dd>
 
                 <dt class="col-sm-3">Kategori</dt>
-                <dd class="col-sm-9">{{ $categories[$item->category] ?? ucfirst($item->category) }}</dd>
+                <dd class="col-sm-9">{{ $categories[$item->category] ?? ucfirst(str_replace('_', ' ', $item->category)) }}</dd>
+
+                <dt class="col-sm-3">Kondisi / Tahap Material</dt>
+                <dd class="col-sm-9">{{ $materialStates[$item->material_state ?? 'none'] ?? ucfirst(str_replace('_', ' ', $item->material_state ?? 'none')) }}</dd>
 
                 <dt class="col-sm-3">Satuan</dt>
                 <dd class="col-sm-9">{{ strtoupper($item->unit) }}</dd>

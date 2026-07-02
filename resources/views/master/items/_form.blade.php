@@ -1,5 +1,9 @@
 @csrf
 
+@if(request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create')
+    <input type="hidden" name="return_to" value="purchases.create">
+@endif
+
 <div class="row g-4">
     <div class="col-md-4">
         <label for="code" class="form-label">Kode <span class="text-danger">*</span></label>
@@ -55,25 +59,51 @@
     </div>
 
     <div class="col-md-4">
-        <label for="unit" class="form-label">Satuan <span class="text-danger">*</span></label>
+        <label for="material_state" class="form-label">Kondisi / Tahap Material <span class="text-danger">*</span></label>
         <select
-            class="form-select @error('unit') is-invalid @enderror"
-            id="unit"
-            name="unit"
+            class="form-select @error('material_state') is-invalid @enderror"
+            id="material_state"
+            name="material_state"
             required
         >
-            @foreach($units as $value => $label)
-                <option value="{{ $value }}" @selected(old('unit', $item->unit ?? 'kg') === $value)>
+            @foreach($materialStates as $value => $label)
+                <option value="{{ $value }}" @selected(old('material_state', $item->material_state ?? 'none') === $value)>
                     {{ $label }}
                 </option>
             @endforeach
         </select>
-        @error('unit')
+        <div class="form-text">Gunakan Basah/Kering untuk gabah agar siap dipakai di proses produksi.</div>
+        @error('material_state')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
 
     <div class="col-md-4">
+        <label for="unit" class="form-label">Satuan <span class="text-danger">*</span></label>
+        <input
+            type="search"
+            class="form-control @error('unit') is-invalid @enderror"
+            id="unit"
+            name="unit"
+            value="{{ old('unit', $item->unit ?? 'kg') }}"
+            list="unit-options"
+            required
+            maxlength="50"
+            placeholder="Contoh: kg, pcs, roll"
+            autocomplete="off"
+        >
+        <datalist id="unit-options">
+            @foreach($unitOptions as $unitOption)
+                <option value="{{ $unitOption }}"></option>
+            @endforeach
+        </datalist>
+        <div class="form-text">Bisa ketik satuan baru atau pilih dari satuan yang pernah dipakai.</div>
+        @error('unit')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-12">
         <label for="minimum_stock" class="form-label">Stok Minimum</label>
         <input
             type="number"
@@ -160,6 +190,6 @@
 </div>
 
 <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-5">
-    <a href="{{ route('master.items.index') }}" class="btn btn-label-secondary">Batal</a>
+    <a href="{{ (request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create') ? route('purchases.create') : route('master.items.index') }}" class="btn btn-label-secondary">Batal</a>
     <button type="submit" class="btn btn-primary">Simpan</button>
 </div>

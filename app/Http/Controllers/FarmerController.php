@@ -32,13 +32,14 @@ class FarmerController extends Controller
 
     public function create(): View
     {
-        return view('master.farmers.create');
+        return view('master.farmers.create', [
+            'nextCode' => $this->generateCode(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'unique:farmers,code'],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'identity_number' => ['nullable', 'string', 'max:100', 'unique:farmers,identity_number'],
@@ -47,9 +48,19 @@ class FarmerController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $validated['code'] = $this->generateCode();
         $validated['is_active'] = $request->boolean('is_active');
 
-        Farmer::create($validated);
+        $farmer = Farmer::create($validated);
+
+        if ($request->input('return_to') === 'purchases.create') {
+            return redirect()
+                ->route('purchases.create', [
+                    'source_type' => 'farmer',
+                    'farmer_id' => $farmer->id,
+                ])
+                ->with('success', 'Data petani berhasil ditambahkan.');
+        }
 
         return redirect()
             ->route('master.farmers.index')
@@ -104,5 +115,23 @@ class FarmerController extends Controller
         return redirect()
             ->route('master.farmers.index')
             ->with('success', 'Data petani berhasil dihapus.');
+    }
+
+    private function generateCode(): string
+    {
+        $lastNumber = Farmer::query()
+            ->where('code', 'like', 'PTR%')
+            ->get()
+            ->map(function (Farmer $farmer) {
+                return (int) preg_replace('/\D/', '', $farmer->code);
+            })
+            ->max() ?? 0;
+
+        do {
+            $lastNumber++;
+            $code = 'PTR'.str_pad((string) $lastNumber, 3, '0', STR_PAD_LEFT);
+        } while (Farmer::where('code', $code)->exists());
+
+        return $code;
     }
 }
