@@ -22,6 +22,10 @@
 
     <div class="card mb-4">
         <div class="card-body">
+            @php
+                $sourceName = $purchase->supplier?->name ?? $purchase->farmer?->name ?? '-';
+                $sourceLabel = $purchase->supplier ? 'Supplier' : ($purchase->farmer ? 'Petani' : '-');
+            @endphp
             <dl class="row mb-0">
                 <dt class="col-sm-3">Nomor</dt>
                 <dd class="col-sm-9">{{ $purchase->number }}</dd>
@@ -29,8 +33,17 @@
                 <dt class="col-sm-3">Tanggal</dt>
                 <dd class="col-sm-9">{{ $purchase->purchase_date?->format('d M Y') }}</dd>
 
-                <dt class="col-sm-3">Supplier</dt>
-                <dd class="col-sm-9">{{ $purchase->supplier->name }}</dd>
+                <dt class="col-sm-3">Asal Barang</dt>
+                <dd class="col-sm-9">
+                    {{ $sourceName }}
+                    <span class="text-muted">({{ $sourceLabel }})</span>
+                </dd>
+
+                <dt class="col-sm-3">Jenis Angkutan</dt>
+                <dd class="col-sm-9">{{ $purchase->transport_type ?: '-' }}</dd>
+
+                <dt class="col-sm-3">No Pol Kendaraan</dt>
+                <dd class="col-sm-9">{{ $purchase->vehicle_plate_number ?: '-' }}</dd>
 
                 <dt class="col-sm-3">Total</dt>
                 <dd class="col-sm-9">Rp {{ number_format((float) $purchase->total_amount, 2, ',', '.') }}</dd>

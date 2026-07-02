@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Item;
+use App\Models\Farmer;
 use App\Models\Purchase;
 use App\Models\Stock;
 use App\Models\StockMovement;
@@ -21,6 +22,7 @@ class PurchaseSeeder extends Seeder
         $this->call([
             RiceVarietySeeder::class,
             SeedClassSeeder::class,
+            FarmerSeeder::class,
             SupplierSeeder::class,
             WarehouseSeeder::class,
             ItemSeeder::class,
@@ -31,6 +33,8 @@ class PurchaseSeeder extends Seeder
                 'number' => 'PO-DMY-001',
                 'purchase_date' => '2026-06-01',
                 'supplier_code' => 'SUP001',
+                'transport_type' => 'Pickup',
+                'vehicle_plate_number' => 'T 1021 AB',
                 'notes' => 'Pembelian kemasan awal bulan.',
                 'items' => [
                     ['item_code' => 'BRG004', 'warehouse_code' => 'GDG003', 'quantity' => 1000, 'unit_price' => 1500],
@@ -40,7 +44,9 @@ class PurchaseSeeder extends Seeder
             [
                 'number' => 'PO-DMY-002',
                 'purchase_date' => '2026-06-03',
-                'supplier_code' => 'SUP002',
+                'farmer_code' => 'PTR001',
+                'transport_type' => 'Truk Engkel',
+                'vehicle_plate_number' => 'T 2456 CD',
                 'notes' => 'Pembelian gabah calon benih.',
                 'items' => [
                     ['item_code' => 'BRG003', 'warehouse_code' => 'GDG002', 'quantity' => 3500, 'unit_price' => 6200],
@@ -50,6 +56,8 @@ class PurchaseSeeder extends Seeder
                 'number' => 'PO-DMY-003',
                 'purchase_date' => '2026-06-05',
                 'supplier_code' => 'SUP004',
+                'transport_type' => 'Truk Colt Diesel',
+                'vehicle_plate_number' => 'D 8891 XY',
                 'notes' => 'Pembelian benih siap jual.',
                 'items' => [
                     ['item_code' => 'BRG001', 'warehouse_code' => 'GDG001', 'quantity' => 1200, 'unit_price' => 12500],
@@ -60,6 +68,8 @@ class PurchaseSeeder extends Seeder
                 'number' => 'PO-DMY-004',
                 'purchase_date' => '2026-06-07',
                 'supplier_code' => 'SUP003',
+                'transport_type' => 'Pickup',
+                'vehicle_plate_number' => 'T 1021 AB',
                 'notes' => 'Tambahan kebutuhan kemasan.',
                 'items' => [
                     ['item_code' => 'BRG004', 'warehouse_code' => 'GDG003', 'quantity' => 750, 'unit_price' => 1550],
@@ -68,8 +78,10 @@ class PurchaseSeeder extends Seeder
             [
                 'number' => 'PO-DMY-005',
                 'purchase_date' => '2026-06-09',
-                'supplier_code' => 'SUP005',
-                'notes' => 'Pembelian bahan dari mitra lokal.',
+                'farmer_code' => 'PTR004',
+                'transport_type' => 'Truk Engkel',
+                'vehicle_plate_number' => 'T 7788 EF',
+                'notes' => 'Pembelian bahan dari petani mitra lokal.',
                 'items' => [
                     ['item_code' => 'BRG003', 'warehouse_code' => 'GDG002', 'quantity' => 1800, 'unit_price' => 6100],
                     ['item_code' => 'BRG005', 'warehouse_code' => 'GDG003', 'quantity' => 1000, 'unit_price' => 375],
@@ -83,7 +95,12 @@ class PurchaseSeeder extends Seeder
             }
 
             DB::transaction(function () use ($purchaseData) {
-                $supplier = Supplier::where('code', $purchaseData['supplier_code'])->firstOrFail();
+                $supplier = isset($purchaseData['supplier_code'])
+                    ? Supplier::where('code', $purchaseData['supplier_code'])->firstOrFail()
+                    : null;
+                $farmer = isset($purchaseData['farmer_code'])
+                    ? Farmer::where('code', $purchaseData['farmer_code'])->firstOrFail()
+                    : null;
                 $totalAmount = collect($purchaseData['items'])->sum(
                     fn (array $item) => (float) $item['quantity'] * (float) $item['unit_price']
                 );
@@ -91,7 +108,10 @@ class PurchaseSeeder extends Seeder
                 $purchase = Purchase::create([
                     'number' => $purchaseData['number'],
                     'purchase_date' => $purchaseData['purchase_date'],
-                    'supplier_id' => $supplier->id,
+                    'supplier_id' => $supplier?->id,
+                    'farmer_id' => $farmer?->id,
+                    'transport_type' => $purchaseData['transport_type'],
+                    'vehicle_plate_number' => $purchaseData['vehicle_plate_number'],
                     'total_amount' => $totalAmount,
                     'notes' => $purchaseData['notes'],
                 ]);

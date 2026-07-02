@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Item;
+use App\Models\Farmer;
 use App\Models\Purchase;
 use App\Models\Stock;
 use App\Models\Supplier;
@@ -45,6 +46,7 @@ class PurchaseTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Tambah Pembelian Barang');
+        $response->assertSee('Petani');
         $response->assertSee('Tambah Baris');
     }
 
@@ -57,7 +59,10 @@ class PurchaseTest extends TestCase
         $response = $this->actingAs($editor)->post(route('purchases.store'), [
             'number' => 'PO-002',
             'purchase_date' => '2026-06-10',
+            'source_type' => 'supplier',
             'supplier_id' => $supplier->id,
+            'transport_type' => 'Truk Engkel',
+            'vehicle_plate_number' => 't 1234 ab',
             'notes' => 'Pembelian awal.',
             'items' => [
                 [
@@ -75,6 +80,8 @@ class PurchaseTest extends TestCase
         $this->assertDatabaseHas('purchases', [
             'number' => 'PO-002',
             'supplier_id' => $supplier->id,
+            'transport_type' => 'Truk Engkel',
+            'vehicle_plate_number' => 'T 1234 AB',
             'total_amount' => 1500000,
         ]);
         $this->assertDatabaseHas('purchase_items', [
@@ -99,6 +106,50 @@ class PurchaseTest extends TestCase
         ]);
     }
 
+    public function test_editor_can_create_purchase_from_farmer_and_increase_stock(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $farmer = $this->farmer();
+        [$item, $warehouse] = $this->itemAndWarehouse();
+
+        $response = $this->actingAs($editor)->post(route('purchases.store'), [
+            'number' => 'PO-FRM-001',
+            'purchase_date' => '2026-06-10',
+            'source_type' => 'farmer',
+            'farmer_id' => $farmer->id,
+            'notes' => 'Pembelian dari petani mitra.',
+            'items' => [
+                [
+                    'item_id' => $item->id,
+                    'warehouse_id' => $warehouse->id,
+                    'quantity' => 800,
+                    'unit_price' => 6200,
+                ],
+            ],
+        ]);
+
+        $purchase = Purchase::first();
+
+        $response->assertRedirect(route('purchases.show', $purchase));
+        $this->assertDatabaseHas('purchases', [
+            'number' => 'PO-FRM-001',
+            'supplier_id' => null,
+            'farmer_id' => $farmer->id,
+            'total_amount' => 4960000,
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'quantity' => 800,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'type' => 'purchase',
+            'quantity_in' => 800,
+            'balance_after' => 800,
+            'reference_number' => 'PO-FRM-001',
+        ]);
+    }
+
     public function test_purchase_adds_to_existing_stock(): void
     {
         $admin = $this->userWithRole('admin');
@@ -114,6 +165,7 @@ class PurchaseTest extends TestCase
         $response = $this->actingAs($admin)->post(route('purchases.store'), [
             'number' => 'PO-003',
             'purchase_date' => '2026-06-10',
+            'source_type' => 'supplier',
             'supplier_id' => $supplier->id,
             'items' => [
                 [
@@ -172,6 +224,15 @@ class PurchaseTest extends TestCase
         return Supplier::create([
             'code' => 'SUP001',
             'name' => 'CV Agro Makmur',
+            'is_active' => true,
+        ]);
+    }
+
+    private function farmer(): Farmer
+    {
+        return Farmer::create([
+            'code' => 'PTR001',
+            'name' => 'Budi Santoso',
             'is_active' => true,
         ]);
     }

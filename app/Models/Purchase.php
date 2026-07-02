@@ -20,6 +20,9 @@ class Purchase extends Model
         'number',
         'purchase_date',
         'supplier_id',
+        'farmer_id',
+        'transport_type',
+        'vehicle_plate_number',
         'total_amount',
         'notes',
         'created_by',
@@ -33,6 +36,11 @@ class Purchase extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function farmer(): BelongsTo
+    {
+        return $this->belongsTo(Farmer::class);
     }
 
     public function items(): HasMany

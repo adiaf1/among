@@ -5,7 +5,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
         <div>
             <h4 class="mb-1">Pembelian Barang</h4>
-            <p class="text-muted mb-0">Transaksi barang masuk dari supplier ke gudang.</p>
+            <p class="text-muted mb-0">Transaksi barang masuk dari petani atau supplier ke gudang.</p>
         </div>
         <a href="{{ route('purchases.create') }}" class="btn btn-primary">
             <i class="bx bx-plus me-1"></i> Tambah
@@ -28,7 +28,7 @@
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Cari nomor atau supplier"
+                        placeholder="Cari nomor, supplier, atau petani"
                     >
                 </div>
                 <div class="col-md-auto d-flex gap-2">
@@ -46,17 +46,24 @@
                     <tr>
                         <th>Nomor</th>
                         <th>Tanggal</th>
-                        <th>Supplier</th>
+                        <th>Asal Barang</th>
                         <th>Total</th>
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($purchases as $purchase)
+                        @php
+                            $sourceName = $purchase->supplier?->name ?? $purchase->farmer?->name ?? '-';
+                            $sourceLabel = $purchase->supplier ? 'Supplier' : ($purchase->farmer ? 'Petani' : '-');
+                        @endphp
                         <tr>
                             <td><span class="fw-medium">{{ $purchase->number }}</span></td>
                             <td>{{ $purchase->purchase_date?->format('d M Y') }}</td>
-                            <td>{{ $purchase->supplier->name }}</td>
+                            <td>
+                                <span class="fw-medium">{{ $sourceName }}</span>
+                                <div class="text-muted small">{{ $sourceLabel }}</div>
+                            </td>
                             <td>Rp {{ number_format((float) $purchase->total_amount, 2, ',', '.') }}</td>
                             <td class="text-end">
                                 <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-label-primary">

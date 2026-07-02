@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\Farmer;
 use App\Models\Purchase;
 use App\Models\Stock;
 use App\Models\StockMovement;
@@ -21,10 +22,14 @@ class PurchaseController extends Controller
         $search = $request->string('search')->toString();
 
         $purchases = Purchase::query()
-            ->with('supplier')
+            ->with(['supplier', 'farmer'])
             ->when($search, function ($query) use ($search) {
                 $query->where('number', 'like', "%{$search}%")
                     ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('farmer', function ($query) use ($search) {
                         $query->where('name', 'like', "%{$search}%")
                             ->orWhere('code', 'like', "%{$search}%");
                     });
@@ -40,6 +45,9 @@ class PurchaseController extends Controller
     {
         return view('purchases.create', [
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(),
+            'farmers' => Farmer::where('is_active', true)->orderBy('name')->get(),
+            'transportTypes' => $this->distinctPurchaseValues('transport_type'),
+            'vehiclePlateNumbers' => $this->distinctPurchaseValues('vehicle_plate_number'),
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
         ]);
@@ -57,10 +65,29 @@ class PurchaseController extends Controller
                 ->all(),
         ]);
 
+        if (! $request->filled('source_type')) {
+            $request->merge([
+                'source_type' => $request->filled('farmer_id') ? 'farmer' : 'supplier',
+            ]);
+        }
+
+        $request->merge([
+            'transport_type' => $request->filled('transport_type')
+                ? preg_replace('/\s+/', ' ', trim((string) $request->input('transport_type')))
+                : null,
+            'vehicle_plate_number' => $request->filled('vehicle_plate_number')
+                ? Str::upper(preg_replace('/\s+/', ' ', trim((string) $request->input('vehicle_plate_number'))))
+                : null,
+        ]);
+
         $validated = $request->validate([
             'number' => ['nullable', 'string', 'max:100', 'unique:purchases,number'],
             'purchase_date' => ['required', 'date'],
-            'supplier_id' => ['required', 'uuid', 'exists:suppliers,id'],
+            'source_type' => ['required', 'string', 'in:supplier,farmer'],
+            'supplier_id' => ['required_if:source_type,supplier', 'nullable', 'uuid', 'exists:suppliers,id', 'prohibited_if:source_type,farmer'],
+            'farmer_id' => ['required_if:source_type,farmer', 'nullable', 'uuid', 'exists:farmers,id', 'prohibited_if:source_type,supplier'],
+            'transport_type' => ['nullable', 'string', 'max:100'],
+            'vehicle_plate_number' => ['nullable', 'string', 'max:20'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'uuid', 'exists:items,id'],
@@ -78,7 +105,10 @@ class PurchaseController extends Controller
             $purchase = Purchase::create([
                 'number' => $number,
                 'purchase_date' => $validated['purchase_date'],
-                'supplier_id' => $validated['supplier_id'],
+                'supplier_id' => $validated['supplier_id'] ?? null,
+                'farmer_id' => $validated['farmer_id'] ?? null,
+                'transport_type' => $validated['transport_type'] ?? null,
+                'vehicle_plate_number' => $validated['vehicle_plate_number'] ?? null,
                 'total_amount' => $totalAmount,
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => $request->user()?->id,
@@ -135,7 +165,7 @@ class PurchaseController extends Controller
 
     public function show(Purchase $purchase): View
     {
-        $purchase->load(['supplier', 'items.item', 'items.warehouse', 'creator']);
+        $purchase->load(['supplier', 'farmer', 'items.item', 'items.warehouse', 'creator']);
 
         return view('purchases.show', compact('purchase'));
     }
@@ -147,5 +177,16 @@ class PurchaseController extends Controller
         } while (Purchase::where('number', $number)->exists());
 
         return $number;
+    }
+
+    private function distinctPurchaseValues(string $column)
+    {
+        return Purchase::query()
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column)
+            ->values();
     }
 }
