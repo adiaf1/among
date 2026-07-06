@@ -29,11 +29,81 @@ class PurchaseTest extends TestCase
             'total_amount' => 1500000,
         ]);
 
-        $response = $this->actingAs($admin)->get(route('purchases.index'));
+        $response = $this->actingAs($admin)->get(route('purchases.index', [
+            'start_date' => '2026-06-10',
+            'end_date' => '2026-06-10',
+        ]));
 
         $response->assertOk();
         $response->assertSee('PO-001');
         $response->assertSee('CV Agro Makmur');
+    }
+
+    public function test_purchases_index_defaults_to_today(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $supplier = $this->supplier();
+
+        Purchase::create([
+            'number' => 'PO-TODAY',
+            'purchase_date' => now()->toDateString(),
+            'supplier_id' => $supplier->id,
+            'total_amount' => 100000,
+        ]);
+        Purchase::create([
+            'number' => 'PO-OLD',
+            'purchase_date' => now()->subDay()->toDateString(),
+            'supplier_id' => $supplier->id,
+            'total_amount' => 200000,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('purchases.index'));
+
+        $response->assertOk();
+        $response->assertSee('PO-TODAY');
+        $response->assertDontSee('PO-OLD');
+    }
+
+    public function test_purchases_index_can_filter_by_date_period(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $supplier = $this->supplier();
+
+        Purchase::create([
+            'number' => 'PO-OLD',
+            'purchase_date' => '2026-06-09',
+            'supplier_id' => $supplier->id,
+            'total_amount' => 200000,
+        ]);
+        Purchase::create([
+            'number' => 'PO-SELECTED',
+            'purchase_date' => '2026-06-10',
+            'supplier_id' => $supplier->id,
+            'total_amount' => 300000,
+        ]);
+        Purchase::create([
+            'number' => 'PO-END',
+            'purchase_date' => '2026-06-11',
+            'supplier_id' => $supplier->id,
+            'total_amount' => 400000,
+        ]);
+        Purchase::create([
+            'number' => 'PO-FUTURE',
+            'purchase_date' => '2026-06-12',
+            'supplier_id' => $supplier->id,
+            'total_amount' => 500000,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('purchases.index', [
+            'start_date' => '2026-06-10',
+            'end_date' => '2026-06-11',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('PO-SELECTED');
+        $response->assertSee('PO-END');
+        $response->assertDontSee('PO-OLD');
+        $response->assertDontSee('PO-FUTURE');
     }
 
     public function test_admin_can_render_create_purchase_page(): void

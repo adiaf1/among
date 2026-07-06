@@ -39,25 +39,35 @@ class PurchaseController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $startDate = $request->date('start_date')?->toDateString() ?? now()->toDateString();
+        $endDate = $request->date('end_date')?->toDateString() ?? $startDate;
+
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
 
         $purchases = Purchase::query()
             ->with(['supplier', 'farmer'])
+            ->whereBetween('purchase_date', [$startDate, $endDate])
             ->when($search, function ($query) use ($search) {
-                $query->where('number', 'like', "%{$search}%")
-                    ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('farmer', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->where('number', 'like', "%{$search}%")
+                        ->orWhereHas('supplier', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('farmer', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        });
                     });
             })
+            ->orderByDesc('purchase_date')
             ->latest('created_at')
             ->paginate(10)
             ->withQueryString();
 
-        return view('purchases.index', compact('purchases', 'search'));
+        return view('purchases.index', compact('purchases', 'search', 'startDate', 'endDate'));
     }
 
     public function create(): View

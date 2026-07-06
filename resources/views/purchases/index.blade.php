@@ -5,7 +5,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
         <div>
             <h4 class="mb-1">Pembelian Barang</h4>
-            <p class="text-muted mb-0">Transaksi barang masuk dari petani atau supplier ke gudang.</p>
+            <p class="text-muted mb-0">Transaksi barang masuk dari petani atau supplier ke gudang per periode tanggal.</p>
         </div>
         <a href="{{ route('purchases.create') }}" class="btn btn-primary">
             <i class="bx bx-plus me-1"></i> Tambah
@@ -22,18 +22,40 @@
     <div class="card">
         <div class="card-header border-bottom">
             <form method="GET" action="{{ route('purchases.index') }}" class="row g-3 align-items-center">
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-3 col-lg-2">
+                    <label for="start_date" class="form-label mb-1">Tanggal Awal</label>
+                    <input
+                        type="date"
+                        id="start_date"
+                        name="start_date"
+                        value="{{ $startDate }}"
+                        class="form-control"
+                    >
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <label for="end_date" class="form-label mb-1">Tanggal Akhir</label>
+                    <input
+                        type="date"
+                        id="end_date"
+                        name="end_date"
+                        value="{{ $endDate }}"
+                        class="form-control"
+                    >
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <label for="search" class="form-label mb-1">Pencarian</label>
                     <input
                         type="search"
+                        id="search"
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
                         placeholder="Cari nomor, supplier, atau petani"
                     >
                 </div>
-                <div class="col-md-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-label-primary">Cari</button>
-                    @if($search)
+                <div class="col-md-auto d-flex gap-2 align-self-end">
+                    <button type="submit" class="btn btn-label-primary">Filter</button>
+                    @if($search || $startDate !== now()->toDateString() || $endDate !== now()->toDateString())
                         <a href="{{ route('purchases.index') }}" class="btn btn-label-secondary">Reset</a>
                     @endif
                 </div>
