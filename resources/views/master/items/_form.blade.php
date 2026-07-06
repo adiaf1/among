@@ -3,6 +3,10 @@
 @if(request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create')
     <input type="hidden" name="return_to" value="purchases.create">
 @endif
+@if(request('return_to') === 'seed-growings.show' || old('return_to') === 'seed-growings.show')
+    <input type="hidden" name="return_to" value="seed-growings.show">
+    <input type="hidden" name="seed_growing_id" value="{{ old('seed_growing_id', request('seed_growing_id')) }}">
+@endif
 
 <div class="row g-4">
     <div class="col-md-4">
@@ -48,7 +52,7 @@
             required
         >
             @foreach($categories as $value => $label)
-                <option value="{{ $value }}" @selected(old('category', $item->category ?? 'lainnya') === $value)>
+                <option value="{{ $value }}" @selected(old('category', $item->category ?? request('category', 'lainnya')) === $value)>
                     {{ $label }}
                 </option>
             @endforeach
@@ -67,7 +71,7 @@
             required
         >
             @foreach($materialStates as $value => $label)
-                <option value="{{ $value }}" @selected(old('material_state', $item->material_state ?? 'none') === $value)>
+                <option value="{{ $value }}" @selected(old('material_state', $item->material_state ?? request('material_state', 'none')) === $value)>
                     {{ $label }}
                 </option>
             @endforeach
@@ -85,7 +89,7 @@
             class="form-control @error('unit') is-invalid @enderror"
             id="unit"
             name="unit"
-            value="{{ old('unit', $item->unit ?? 'kg') }}"
+            value="{{ old('unit', $item->unit ?? request('unit', 'kg')) }}"
             list="unit-options"
             required
             maxlength="50"
@@ -130,7 +134,7 @@
         >
             <option value="">Tidak terkait varietas</option>
             @foreach($riceVarieties as $riceVariety)
-                <option value="{{ $riceVariety->id }}" @selected(old('rice_variety_id', $item->rice_variety_id ?? '') === $riceVariety->id)>
+                <option value="{{ $riceVariety->id }}" @selected(old('rice_variety_id', $item->rice_variety_id ?? request('rice_variety_id', '')) === $riceVariety->id)>
                     {{ $riceVariety->code }} - {{ $riceVariety->name }}
                 </option>
             @endforeach
@@ -149,7 +153,7 @@
         >
             <option value="">Tidak terkait kelas benih</option>
             @foreach($seedClasses as $seedClass)
-                <option value="{{ $seedClass->id }}" @selected(old('seed_class_id', $item->seed_class_id ?? '') === $seedClass->id)>
+                <option value="{{ $seedClass->id }}" @selected(old('seed_class_id', $item->seed_class_id ?? request('seed_class_id', '')) === $seedClass->id)>
                     {{ $seedClass->code }} - {{ $seedClass->name }}
                 </option>
             @endforeach
@@ -190,6 +194,14 @@
 </div>
 
 <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end mt-5">
-    <a href="{{ (request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create') ? route('purchases.create') : route('master.items.index') }}" class="btn btn-label-secondary">Batal</a>
+    @php
+        $cancelUrl = route('master.items.index');
+        if (request('return_to') === 'purchases.create' || old('return_to') === 'purchases.create') {
+            $cancelUrl = route('purchases.create');
+        } elseif ((request('return_to') === 'seed-growings.show' || old('return_to') === 'seed-growings.show') && (request('seed_growing_id') || old('seed_growing_id'))) {
+            $cancelUrl = route('seed-growings.show', old('seed_growing_id', request('seed_growing_id')));
+        }
+    @endphp
+    <a href="{{ $cancelUrl }}" class="btn btn-label-secondary">Batal</a>
     <button type="submit" class="btn btn-primary">Simpan</button>
 </div>

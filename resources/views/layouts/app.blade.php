@@ -456,6 +456,15 @@
                                 @endhasanyrole
 
                                 @hasanyrole('admin|editor')
+                                <li class="menu-item {{ request()->routeIs('seed-growings.*') ? 'active' : '' }}">
+                                    <a href="{{ route('seed-growings.index') }}" class="menu-link">
+                                        <i class="menu-icon tf-icons bx bx-certification"></i>
+                                        <div data-i18n="Penangkaran Benih">Penangkaran Benih</div>
+                                    </a>
+                                </li>
+                                @endhasanyrole
+
+                                @hasanyrole('admin|editor')
                                 <!-- Users -->
                                 <li class="menu-item {{ request()->is('users','roles','permissions') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">
@@ -600,6 +609,8 @@
             });
         });
     </script>
+
+    @stack('scripts')
     
 </body>
 

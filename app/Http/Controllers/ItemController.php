@@ -88,6 +88,12 @@ class ItemController extends Controller
                 ->with('success', 'Data barang berhasil ditambahkan. Barang baru sudah dipilih di detail pembelian.');
         }
 
+        if ($request->input('return_to') === 'seed-growings.show' && $request->filled('seed_growing_id')) {
+            return redirect()
+                ->route('seed-growings.show', $request->input('seed_growing_id'))
+                ->with('success', 'Data barang hasil panen berhasil ditambahkan. Silakan pilih barang pada form panen.');
+        }
+
         return redirect()
             ->route('master.items.index')
             ->with('success', 'Data barang berhasil ditambahkan.');

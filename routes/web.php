@@ -9,6 +9,9 @@ use App\Http\Controllers\LandController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
+use App\Http\Controllers\SeedGrowingHarvestController;
+use App\Http\Controllers\SeedGrowingInspectionController;
+use App\Http\Controllers\SeedGrowingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\SupplierController;
@@ -61,6 +64,13 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
     Route::resource('stocks', StockController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('stock-transfers', StockTransferController::class)->only(['index', 'create', 'store', 'show']);
+    Route::patch('seed-growings/{seed_growing}/status', [SeedGrowingController::class, 'updateStatus'])
+        ->name('seed-growings.status.update');
+    Route::resource('seed-growings', SeedGrowingController::class)->only(['index', 'create', 'store', 'show']);
+    Route::patch('seed-growings/{seed_growing}/inspections/{inspection}', [SeedGrowingInspectionController::class, 'update'])
+        ->name('seed-growings.inspections.update');
+    Route::patch('seed-growings/{seed_growing}/harvest', [SeedGrowingHarvestController::class, 'update'])
+        ->name('seed-growings.harvest.update');
 });
 
 require __DIR__.'/auth.php';
