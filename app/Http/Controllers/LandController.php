@@ -11,6 +11,13 @@ use Illuminate\View\View;
 
 class LandController extends Controller
 {
+    private const CERTIFICATION_STATUSES = [
+        'belum_ditinjau' => 'Belum Ditinjau',
+        'layak' => 'Layak',
+        'perlu_perbaikan' => 'Perlu Perbaikan',
+        'tidak_layak' => 'Tidak Layak',
+    ];
+
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
@@ -21,6 +28,7 @@ class LandController extends Controller
                     $query->where('code', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%")
                         ->orWhere('location', 'like', "%{$search}%")
+                        ->orWhere('certification_status', 'like', "%{$search}%")
                         ->orWhereHas('farmer', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%");
                         });
@@ -30,14 +38,21 @@ class LandController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('master.lands.index', compact('lands', 'search'));
+        return view('master.lands.index', [
+            'lands' => $lands,
+            'search' => $search,
+            'certificationStatuses' => self::CERTIFICATION_STATUSES,
+        ]);
     }
 
     public function create(): View
     {
         $farmers = Farmer::where('is_active', true)->orderBy('name')->get();
 
-        return view('master.lands.create', compact('farmers'));
+        return view('master.lands.create', [
+            'farmers' => $farmers,
+            'certificationStatuses' => self::CERTIFICATION_STATUSES,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -48,9 +63,12 @@ class LandController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'area_size' => ['nullable', 'numeric', 'min:0'],
             'location' => ['nullable', 'string'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'soil_type' => ['nullable', 'string', 'max:100'],
             'irrigation_type' => ['nullable', 'string', 'max:100'],
             'ownership_status' => ['nullable', 'string', 'max:100'],
+            'certification_status' => ['required', 'string', Rule::in(array_keys(self::CERTIFICATION_STATUSES))],
             'notes' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -68,7 +86,10 @@ class LandController extends Controller
     {
         $land->load('farmer');
 
-        return view('master.lands.show', compact('land'));
+        return view('master.lands.show', [
+            'land' => $land,
+            'certificationStatuses' => self::CERTIFICATION_STATUSES,
+        ]);
     }
 
     public function edit(Land $land): View
@@ -78,7 +99,11 @@ class LandController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('master.lands.edit', compact('land', 'farmers'));
+        return view('master.lands.edit', [
+            'land' => $land,
+            'farmers' => $farmers,
+            'certificationStatuses' => self::CERTIFICATION_STATUSES,
+        ]);
     }
 
     public function update(Request $request, Land $land): RedirectResponse
@@ -94,9 +119,12 @@ class LandController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'area_size' => ['nullable', 'numeric', 'min:0'],
             'location' => ['nullable', 'string'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'soil_type' => ['nullable', 'string', 'max:100'],
             'irrigation_type' => ['nullable', 'string', 'max:100'],
             'ownership_status' => ['nullable', 'string', 'max:100'],
+            'certification_status' => ['required', 'string', Rule::in(array_keys(self::CERTIFICATION_STATUSES))],
             'notes' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
         ]);

@@ -44,9 +44,12 @@ class LandTest extends TestCase
             'name' => 'Sawah Blok Barat',
             'area_size' => 1.75,
             'location' => 'Desa Sukamaju',
+            'latitude' => -6.5601234,
+            'longitude' => 107.7601234,
             'soil_type' => 'Aluvial',
             'irrigation_type' => 'Teknis',
             'ownership_status' => 'Milik sendiri',
+            'certification_status' => 'layak',
             'notes' => 'Lahan siap tanam.',
             'is_active' => '1',
         ]);
@@ -56,6 +59,9 @@ class LandTest extends TestCase
             'farmer_id' => $farmer->id,
             'code' => 'LHN002',
             'name' => 'Sawah Blok Barat',
+            'latitude' => -6.5601234,
+            'longitude' => 107.7601234,
+            'certification_status' => 'layak',
             'is_active' => true,
         ]);
     }
@@ -76,6 +82,9 @@ class LandTest extends TestCase
             'code' => 'LHN003',
             'name' => 'Sawah Baru',
             'area_size' => 3.25,
+            'latitude' => -6.4400000,
+            'longitude' => 107.7700000,
+            'certification_status' => 'perlu_perbaikan',
             'is_active' => '0',
         ]);
 
@@ -83,6 +92,7 @@ class LandTest extends TestCase
         $this->assertDatabaseHas('lands', [
             'id' => $land->id,
             'name' => 'Sawah Baru',
+            'certification_status' => 'perlu_perbaikan',
             'is_active' => false,
         ]);
     }

@@ -31,6 +31,25 @@
                 <dt class="col-sm-3">Lokasi</dt>
                 <dd class="col-sm-9">{{ $land->location ?: '-' }}</dd>
 
+                <dt class="col-sm-3">Koordinat</dt>
+                <dd class="col-sm-9">
+                    @if($land->latitude && $land->longitude)
+                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                            <span>{{ $land->latitude }}, {{ $land->longitude }}</span>
+                            <a
+                                href="https://www.google.com/maps?q={{ $land->latitude }},{{ $land->longitude }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-sm btn-label-primary"
+                            >
+                                <i class="bx bx-map me-1"></i> Buka Google Maps
+                            </a>
+                        </div>
+                    @else
+                        -
+                    @endif
+                </dd>
+
                 <dt class="col-sm-3">Jenis Tanah</dt>
                 <dd class="col-sm-9">{{ $land->soil_type ?: '-' }}</dd>
 
@@ -39,6 +58,20 @@
 
                 <dt class="col-sm-3">Status Kepemilikan</dt>
                 <dd class="col-sm-9">{{ $land->ownership_status ?: '-' }}</dd>
+
+                <dt class="col-sm-3">Status Kelayakan Sertifikasi</dt>
+                <dd class="col-sm-9">
+                    @php($certificationStatus = $land->certification_status ?? 'belum_ditinjau')
+                    @if($certificationStatus === 'layak')
+                        <span class="badge bg-label-success">{{ $certificationStatuses[$certificationStatus] }}</span>
+                    @elseif($certificationStatus === 'perlu_perbaikan')
+                        <span class="badge bg-label-warning">{{ $certificationStatuses[$certificationStatus] }}</span>
+                    @elseif($certificationStatus === 'tidak_layak')
+                        <span class="badge bg-label-danger">{{ $certificationStatuses[$certificationStatus] }}</span>
+                    @else
+                        <span class="badge bg-label-secondary">{{ $certificationStatuses[$certificationStatus] ?? 'Belum Ditinjau' }}</span>
+                    @endif
+                </dd>
 
                 <dt class="col-sm-3">Catatan</dt>
                 <dd class="col-sm-9">{{ $land->notes ?: '-' }}</dd>

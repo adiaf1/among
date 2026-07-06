@@ -21,15 +21,20 @@ class Land extends Model
         'name',
         'area_size',
         'location',
+        'latitude',
+        'longitude',
         'soil_type',
         'irrigation_type',
         'ownership_status',
+        'certification_status',
         'notes',
         'is_active',
     ];
 
     protected $casts = [
         'area_size' => 'decimal:2',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
         'is_active' => 'boolean',
     ];
 

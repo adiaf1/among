@@ -71,15 +71,71 @@
     </div>
 
     <div class="col-12">
-        <label for="location" class="form-label">Lokasi</label>
+        <label for="location" class="form-label">Alamat / Lokasi Lahan</label>
         <textarea
             class="form-control @error('location') is-invalid @enderror"
             id="location"
             name="location"
             rows="3"
-            placeholder="Alamat, blok, desa, atau titik lokasi lahan"
+            placeholder="Alamat, blok, desa, patok lokasi, atau deskripsi akses lahan"
         >{{ old('location', $land->location ?? '') }}</textarea>
         @error('location')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-4">
+        <label for="latitude" class="form-label">Latitude</label>
+        <input
+            type="number"
+            step="0.0000001"
+            min="-90"
+            max="90"
+            class="form-control @error('latitude') is-invalid @enderror"
+            id="latitude"
+            name="latitude"
+            value="{{ old('latitude', $land->latitude ?? '') }}"
+            placeholder="Contoh: -6.5601234"
+        >
+        @error('latitude')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-4">
+        <label for="longitude" class="form-label">Longitude</label>
+        <input
+            type="number"
+            step="0.0000001"
+            min="-180"
+            max="180"
+            class="form-control @error('longitude') is-invalid @enderror"
+            id="longitude"
+            name="longitude"
+            value="{{ old('longitude', $land->longitude ?? '') }}"
+            placeholder="Contoh: 107.7601234"
+        >
+        @error('longitude')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="col-md-4">
+        <label for="certification_status" class="form-label">Status Kelayakan Sertifikasi <span class="text-danger">*</span></label>
+        <select
+            class="form-select @error('certification_status') is-invalid @enderror"
+            id="certification_status"
+            name="certification_status"
+            required
+        >
+            @foreach($certificationStatuses as $value => $label)
+                <option value="{{ $value }}" @selected(old('certification_status', $land->certification_status ?? 'belum_ditinjau') === $value)>
+                    {{ $label }}
+                </option>
+            @endforeach
+        </select>
+        <div class="form-text">Dipakai sebagai indikasi awal kelayakan lahan untuk penangkaran/sertifikasi benih.</div>
+        @error('certification_status')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>

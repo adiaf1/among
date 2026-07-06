@@ -28,7 +28,7 @@
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Cari kode, nama lahan, lokasi, atau petani"
+                        placeholder="Cari kode, nama lahan, lokasi, status, atau petani"
                     >
                 </div>
                 <div class="col-md-auto d-flex gap-2">
@@ -48,6 +48,7 @@
                         <th>Nama Lahan</th>
                         <th>Petani</th>
                         <th>Luas</th>
+                        <th>Kelayakan</th>
                         <th>Status</th>
                         <th class="text-end">Aksi</th>
                     </tr>
@@ -59,6 +60,18 @@
                             <td>{{ $land->name }}</td>
                             <td>{{ $land->farmer?->name ?? '-' }}</td>
                             <td>{{ $land->area_size ? number_format((float) $land->area_size, 2) . ' ha' : '-' }}</td>
+                            <td>
+                                @php($certificationStatus = $land->certification_status ?? 'belum_ditinjau')
+                                @if($certificationStatus === 'layak')
+                                    <span class="badge bg-label-success">{{ $certificationStatuses[$certificationStatus] }}</span>
+                                @elseif($certificationStatus === 'perlu_perbaikan')
+                                    <span class="badge bg-label-warning">{{ $certificationStatuses[$certificationStatus] }}</span>
+                                @elseif($certificationStatus === 'tidak_layak')
+                                    <span class="badge bg-label-danger">{{ $certificationStatuses[$certificationStatus] }}</span>
+                                @else
+                                    <span class="badge bg-label-secondary">{{ $certificationStatuses[$certificationStatus] ?? 'Belum Ditinjau' }}</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($land->is_active)
                                     <span class="badge bg-label-success">Aktif</span>
@@ -97,7 +110,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-5">Belum ada data lahan.</td>
+                            <td colspan="7" class="text-center text-muted py-5">Belum ada data lahan.</td>
                         </tr>
                     @endforelse
                 </tbody>
