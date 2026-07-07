@@ -164,6 +164,55 @@ class SeedGrowingTest extends TestCase
         $this->assertDatabaseCount('seed_growings', 0);
     }
 
+    public function test_source_seed_item_without_variety_can_be_used_for_selected_variety(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $data = $this->masterData();
+        $unassignedSourceSeedItem = Item::create([
+            'code' => 'BNH999',
+            'name' => 'Benih Jadi Pembelian',
+            'category' => 'benih',
+            'material_state' => 'benih_jadi',
+            'unit' => 'kg',
+            'rice_variety_id' => null,
+            'seed_class_id' => $data['seedClass']->id,
+            'minimum_stock' => 0,
+            'is_active' => true,
+        ]);
+        $unassignedStock = Stock::create([
+            'item_id' => $unassignedSourceSeedItem->id,
+            'warehouse_id' => $data['warehouse']->id,
+            'quantity' => 40,
+        ]);
+
+        $createResponse = $this->actingAs($editor)->get(route('seed-growings.create'));
+
+        $createResponse->assertOk();
+        $createResponse->assertSee('BNH999 - Benih Jadi Pembelian - Varietas belum diset', false);
+
+        $response = $this->actingAs($editor)
+            ->from(route('seed-growings.create'))
+            ->post(route('seed-growings.store'), $this->payload($data, [
+                'number' => 'PKR-20260706-UNASSIGNED',
+                'field_number' => 'LP-UNASSIGNED',
+                'source_seed_item_id' => $unassignedSourceSeedItem->id,
+                'source_seed_quantity' => 25,
+            ]));
+
+        $seedGrowing = SeedGrowing::where('number', 'PKR-20260706-UNASSIGNED')->first();
+
+        $response->assertRedirect(route('seed-growings.show', $seedGrowing));
+        $this->assertDatabaseHas('seed_growings', [
+            'id' => $seedGrowing->id,
+            'rice_variety_id' => $data['riceVariety']->id,
+            'source_seed_item_id' => $unassignedSourceSeedItem->id,
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'id' => $unassignedStock->id,
+            'quantity' => 15,
+        ]);
+    }
+
     public function test_editor_can_update_seed_growing_inspection_cost_and_dates(): void
     {
         $editor = $this->userWithRole('editor');

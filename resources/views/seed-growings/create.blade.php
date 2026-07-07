@@ -112,7 +112,7 @@
                                 data-unit="{{ $item->unit }}"
                                 @selected(old('source_seed_item_id') === $item->id)
                             >
-                                {{ $item->code }} - {{ $item->name }} ({{ $item->unit }})
+                                {{ $item->code }} - {{ $item->name }}{{ $item->riceVariety ? '' : ' - Varietas belum diset' }} ({{ $item->unit }})
                             </option>
                         @endforeach
                     </select>
@@ -283,6 +283,8 @@
             const varietyId = riceVarietySelect.value;
             const seedClassId = document.getElementById('seed_class_id').value;
             let availableItems = 0;
+            let exactItems = 0;
+            let unassignedItems = 0;
 
             Array.from(sourceSeedItemSelect.options).forEach(function (option) {
                 if (! option.value) {
@@ -290,10 +292,17 @@
                     return;
                 }
 
-                option.hidden = ! varietyId || option.dataset.riceVarietyId !== varietyId;
+                const itemVarietyId = option.dataset.riceVarietyId || '';
+                option.hidden = ! varietyId || (itemVarietyId && itemVarietyId !== varietyId);
 
                 if (! option.hidden) {
                     availableItems += 1;
+
+                    if (itemVarietyId === varietyId) {
+                        exactItems += 1;
+                    } else {
+                        unassignedItems += 1;
+                    }
                 }
             });
 
@@ -311,7 +320,11 @@
 
             if (sourceSeedItemHelp) {
                 sourceSeedItemHelp.textContent = varietyId
-                    ? (availableItems ? 'Benih sumber sudah difilter sesuai varietas.' : 'Belum ada benih sumber untuk varietas ini di master barang.')
+                    ? (availableItems
+                        ? (exactItems
+                            ? 'Benih sumber sudah difilter sesuai varietas.'
+                            : 'Belum ada benih sumber yang terhubung langsung ke varietas ini. Opsi tanpa varietas tetap ditampilkan.')
+                        : 'Belum ada benih sumber untuk varietas ini di master barang.')
                     : 'Pilih varietas terlebih dahulu.';
             }
 

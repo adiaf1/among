@@ -111,7 +111,6 @@ class SeedGrowingController extends Controller
             'sourceSeedItems' => Item::with(['riceVariety', 'seedClass'])
                 ->where('is_active', true)
                 ->where('category', 'benih')
-                ->whereNotNull('rice_variety_id')
                 ->orderBy('name')
                 ->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
@@ -193,7 +192,11 @@ class SeedGrowingController extends Controller
             if ($request->filled(['rice_variety_id', 'source_seed_item_id'])) {
                 $item = Item::whereKey($request->input('source_seed_item_id'))->first();
 
-                if (! $item || $item->category !== 'benih' || $item->rice_variety_id !== $request->input('rice_variety_id')) {
+                if (
+                    ! $item
+                    || $item->category !== 'benih'
+                    || ($item->rice_variety_id && $item->rice_variety_id !== $request->input('rice_variety_id'))
+                ) {
                     $validator->errors()->add('source_seed_item_id', 'Benih sumber tidak sesuai dengan varietas yang dipilih.');
                 }
             }

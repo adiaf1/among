@@ -465,6 +465,15 @@
                                 @endhasanyrole
 
                                 @hasanyrole('admin|editor')
+                                <li class="menu-item {{ request()->routeIs('seed-productions.*') ? 'active' : '' }}">
+                                    <a href="{{ route('seed-productions.index') }}" class="menu-link">
+                                        <i class="menu-icon tf-icons bx bx-cog"></i>
+                                        <div data-i18n="Produksi Benih">Produksi Benih</div>
+                                    </a>
+                                </li>
+                                @endhasanyrole
+
+                                @hasanyrole('admin|editor')
                                 <!-- Users -->
                                 <li class="menu-item {{ request()->is('users','roles','permissions') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">

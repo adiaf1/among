@@ -9,6 +9,8 @@ use App\Http\Controllers\LandController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SeedClassController;
+use App\Http\Controllers\SeedProductionController;
+use App\Http\Controllers\SeedProductionStepController;
 use App\Http\Controllers\SeedGrowingHarvestController;
 use App\Http\Controllers\SeedGrowingInspectionController;
 use App\Http\Controllers\SeedGrowingController;
@@ -71,6 +73,9 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         ->name('seed-growings.inspections.update');
     Route::patch('seed-growings/{seed_growing}/harvest', [SeedGrowingHarvestController::class, 'update'])
         ->name('seed-growings.harvest.update');
+    Route::patch('seed-productions/{seed_production}/steps/{step}', [SeedProductionStepController::class, 'update'])
+        ->name('seed-productions.steps.update');
+    Route::resource('seed-productions', SeedProductionController::class)->only(['index', 'create', 'store', 'show']);
 });
 
 require __DIR__.'/auth.php';
