@@ -196,8 +196,8 @@
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
-                                <th style="min-width: 360px;">Stok Bahan</th>
                                 <th style="min-width: 170px;">Peran</th>
+                                <th style="min-width: 360px;">Stok Bahan</th>
                                 <th style="min-width: 160px;">Jumlah</th>
                                 <th style="min-width: 220px;">Catatan</th>
                                 <th style="width: 72px;" class="text-center">Aksi</th>
@@ -206,6 +206,21 @@
                         <tbody id="production-inputs-body">
                             @foreach($oldInputs as $index => $oldInput)
                                 <tr data-production-input-row>
+                                    <td>
+                                        <select
+                                            data-field="role"
+                                            class="form-select @error("inputs.$index.role") is-invalid @enderror"
+                                            name="inputs[{{ $index }}][role]"
+                                            required
+                                        >
+                                            @foreach($inputRoles as $value => $label)
+                                                <option value="{{ $value }}" @selected(($oldInput['role'] ?? 'bahan_utama') === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error("inputs.$index.role")
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </td>
                                     <td>
                                         <select
                                             data-field="stock_id"
@@ -225,21 +240,6 @@
                                             @endforeach
                                         </select>
                                         @error("inputs.$index.stock_id")
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </td>
-                                    <td>
-                                        <select
-                                            data-field="role"
-                                            class="form-select @error("inputs.$index.role") is-invalid @enderror"
-                                            name="inputs[{{ $index }}][role]"
-                                            required
-                                        >
-                                            @foreach($inputRoles as $value => $label)
-                                                <option value="{{ $value }}" @selected(($oldInput['role'] ?? 'bahan_utama') === $value)>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error("inputs.$index.role")
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </td>
@@ -381,14 +381,14 @@
             row.dataset.productionInputRow = '';
             row.innerHTML = `
                 <td>
-                    <select class="form-select" data-field="stock_id" required>
-                    </select>
-                </td>
-                <td>
                     <select class="form-select" data-field="role" required>
                         ${roleOptions.map(function (option) {
                             return `<option value="${option.value}">${option.label}</option>`;
                         }).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select" data-field="stock_id" required>
                     </select>
                 </td>
                 <td>
