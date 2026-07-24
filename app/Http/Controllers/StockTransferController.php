@@ -100,6 +100,7 @@ class StockTransferController extends Controller
                     [
                         'item_id' => $detail['item_id'],
                         'warehouse_id' => $validated['destination_warehouse_id'],
+                        'lot_number' => $sourceStock->lot_number,
                     ],
                     ['quantity' => 0]
                 );

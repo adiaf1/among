@@ -73,8 +73,12 @@ Route::middleware(['auth', 'role:admin|editor'])->group(function () {
         ->name('seed-growings.inspections.update');
     Route::patch('seed-growings/{seed_growing}/harvest', [SeedGrowingHarvestController::class, 'update'])
         ->name('seed-growings.harvest.update');
+    Route::post('seed-productions/{seed_production}/steps', [SeedProductionStepController::class, 'store'])
+        ->name('seed-productions.steps.store');
     Route::patch('seed-productions/{seed_production}/steps/{step}', [SeedProductionStepController::class, 'update'])
         ->name('seed-productions.steps.update');
+    Route::post('seed-productions/{seed_production}/inputs', [SeedProductionController::class, 'storeInput'])
+        ->name('seed-productions.inputs.store');
     Route::resource('seed-productions', SeedProductionController::class)->only(['index', 'create', 'store', 'show']);
 });
 

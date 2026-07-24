@@ -100,7 +100,9 @@ class SeedGrowingController extends Controller
                 ->where('category', 'benih'))
             ->get()
             ->groupBy('item_id')
-            ->map(fn ($rows) => $rows->pluck('quantity', 'warehouse_id'))
+            ->map(fn ($rows) => $rows
+                ->groupBy('warehouse_id')
+                ->map(fn ($warehouseRows) => number_format((float) $warehouseRows->sum('quantity'), 2, '.', '')))
             ->toArray();
 
         return view('seed-growings.create', [
@@ -204,7 +206,7 @@ class SeedGrowingController extends Controller
             if ($request->filled(['source_seed_item_id', 'source_seed_warehouse_id', 'source_seed_quantity'])) {
                 $stockQuantity = Stock::where('item_id', $request->input('source_seed_item_id'))
                     ->where('warehouse_id', $request->input('source_seed_warehouse_id'))
-                    ->value('quantity') ?? 0;
+                    ->sum('quantity');
 
                 if ((float) $request->input('source_seed_quantity') > (float) $stockQuantity) {
                     $validator->errors()->add(
@@ -223,12 +225,15 @@ class SeedGrowingController extends Controller
                 : null;
             $harvestDate = $validated['harvest_date'] ?? $plantingDate?->copy()->addDays(105)->toDateString();
             $sourceSeedQuantity = (float) $validated['source_seed_quantity'];
-            $stock = Stock::lockForUpdate()
+            $sourceStocks = Stock::lockForUpdate()
                 ->where('item_id', $validated['source_seed_item_id'])
                 ->where('warehouse_id', $validated['source_seed_warehouse_id'])
-                ->first();
+                ->where('quantity', '>', 0)
+                ->orderByRaw('lot_number IS NOT NULL')
+                ->oldest()
+                ->get();
 
-            if (! $stock || (float) $stock->quantity < $sourceSeedQuantity) {
+            if ((float) $sourceStocks->sum('quantity') < $sourceSeedQuantity) {
                 abort(422, 'Stok benih sumber tidak mencukupi.');
             }
 
@@ -254,26 +259,37 @@ class SeedGrowingController extends Controller
                 ]);
             }
 
-            $balanceAfter = (float) $stock->quantity - $sourceSeedQuantity;
-            $stock->update(['quantity' => $balanceAfter]);
+            $remainingQuantity = $sourceSeedQuantity;
 
-            StockMovement::create([
-                'stock_id' => $stock->id,
-                'item_id' => $stock->item_id,
-                'warehouse_id' => $stock->warehouse_id,
-                'movement_date' => $validated['sowing_date']
-                    ?? $validated['planting_date']
-                    ?? now()->toDateString(),
-                'type' => 'seed_growing_usage',
-                'quantity_in' => 0,
-                'quantity_out' => $sourceSeedQuantity,
-                'balance_after' => $balanceAfter,
-                'reference_type' => 'seed_growing',
-                'reference_id' => $seedGrowing->id,
-                'reference_number' => $seedGrowing->number,
-                'notes' => 'Pemakaian benih sumber untuk penangkaran '.$seedGrowing->field_number,
-                'created_by' => $request->user()?->id,
-            ]);
+            foreach ($sourceStocks as $stock) {
+                if ($remainingQuantity <= 0) {
+                    break;
+                }
+
+                $quantityOut = min((float) $stock->quantity, $remainingQuantity);
+                $balanceAfter = (float) $stock->quantity - $quantityOut;
+                $stock->update(['quantity' => $balanceAfter]);
+
+                StockMovement::create([
+                    'stock_id' => $stock->id,
+                    'item_id' => $stock->item_id,
+                    'warehouse_id' => $stock->warehouse_id,
+                    'movement_date' => $validated['sowing_date']
+                        ?? $validated['planting_date']
+                        ?? now()->toDateString(),
+                    'type' => 'seed_growing_usage',
+                    'quantity_in' => 0,
+                    'quantity_out' => $quantityOut,
+                    'balance_after' => $balanceAfter,
+                    'reference_type' => 'seed_growing',
+                    'reference_id' => $seedGrowing->id,
+                    'reference_number' => $seedGrowing->number,
+                    'notes' => 'Pemakaian benih sumber untuk penangkaran '.$seedGrowing->field_number,
+                    'created_by' => $request->user()?->id,
+                ]);
+
+                $remainingQuantity -= $quantityOut;
+            }
 
             return $seedGrowing;
         });
@@ -332,6 +348,7 @@ class SeedGrowingController extends Controller
                 [
                     'item_id' => $seedGrowing->source_seed_item_id,
                     'warehouse_id' => $seedGrowing->source_seed_warehouse_id,
+                    'lot_number' => null,
                 ],
                 ['quantity' => 0]
             );

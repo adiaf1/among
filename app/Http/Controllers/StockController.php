@@ -9,6 +9,7 @@ use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class StockController extends Controller
@@ -28,7 +29,7 @@ class StockController extends Controller
                 })->orWhereHas('warehouse', function ($query) use ($search) {
                     $query->where('code', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%");
-                });
+                })->orWhere('lot_number', 'like', "%{$search}%");
             })
             ->when($itemId, fn ($query) => $query->where('item_id', $itemId))
             ->when($warehouseId, fn ($query) => $query->where('warehouse_id', $warehouseId))
@@ -62,16 +63,22 @@ class StockController extends Controller
         $validated = $request->validate([
             'item_id' => ['required', 'uuid', 'exists:items,id'],
             'warehouse_id' => ['required', 'uuid', 'exists:warehouses,id'],
+            'lot_number' => ['nullable', 'string', 'max:100'],
             'quantity' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'movement_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
         ]);
 
         $stock = DB::transaction(function () use ($validated, $request) {
+            $lotNumber = filled($validated['lot_number'] ?? null)
+                ? Str::upper(preg_replace('/\s+/', ' ', trim((string) $validated['lot_number'])))
+                : null;
+
             $stock = Stock::lockForUpdate()->firstOrCreate(
                 [
                     'item_id' => $validated['item_id'],
                     'warehouse_id' => $validated['warehouse_id'],
+                    'lot_number' => $lotNumber,
                 ],
                 ['quantity' => 0]
             );

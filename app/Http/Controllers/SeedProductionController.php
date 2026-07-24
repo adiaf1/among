@@ -6,6 +6,7 @@ use App\Models\RiceVariety;
 use App\Models\SeedClass;
 use App\Models\SeedGrowing;
 use App\Models\SeedProduction;
+use App\Models\SeedProductionStep;
 use App\Models\Stock;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
@@ -33,7 +34,6 @@ class SeedProductionController extends Controller
 
     private const STEPS = [
         ['stage' => 'pengovenan', 'label' => 'Pengovenan', 'offset' => 0],
-        ['stage' => 'pendinginan_benih', 'label' => 'Pendinginan Benih', 'offset' => 1],
         ['stage' => 'pengipasan_blower', 'label' => 'Pengipasan / Blower', 'offset' => 1],
         ['stage' => 'penyusunan_lot', 'label' => 'Penyusunan Barang per Lot', 'offset' => 2],
         ['stage' => 'penyimpanan_barang', 'label' => 'Penyimpanan Barang', 'offset' => 2],
@@ -216,6 +216,8 @@ class SeedProductionController extends Controller
 
     public function show(SeedProduction $seedProduction): View
     {
+        $stocks = $this->availableStocks();
+
         $seedProduction->load([
             'riceVariety',
             'seedClass',
@@ -230,8 +232,95 @@ class SeedProductionController extends Controller
             'seedProduction' => $seedProduction,
             'statuses' => self::STATUSES,
             'inputRoles' => self::INPUT_ROLES,
+            'stocks' => $stocks,
+            'additionalStockOptions' => $stocks->map(fn ($stock) => [
+                'value' => $stock->id,
+                'label' => ($stock->item?->code ?? '-').' - '.($stock->item?->name ?? '-').' | '.($stock->warehouse?->name ?? '-').' | Lot '.($stock->lot_number ?: '-').' | Stok '.number_format((float) $stock->quantity, 2, ',', '.').' '.strtoupper($stock->item?->unit ?? ''),
+                'rice_variety_id' => $stock->item?->rice_variety_id,
+            ])->values(),
             'stepStatuses' => SeedProductionStepController::statuses(),
+            'stepCostTypes' => SeedProductionStepController::costTypes(),
+            'stepPositions' => SeedProductionStepController::positions(),
+            'stepSuggestions' => SeedProductionStep::query()
+                ->select('label')
+                ->distinct()
+                ->orderBy('label')
+                ->pluck('label'),
         ]);
+    }
+
+    public function storeInput(Request $request, SeedProduction $seedProduction): RedirectResponse
+    {
+        if (in_array($seedProduction->status, ['batal', 'siap_salur'], true)) {
+            throw ValidationException::withMessages([
+                'stock_id' => 'Bahan produksi tidak bisa ditambahkan pada produksi yang sudah batal atau siap salur.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'movement_date' => ['required', 'date'],
+            'stock_id' => ['required', 'uuid', 'exists:stocks,id'],
+            'role' => ['required', 'string', Rule::in(array_keys(self::INPUT_ROLES))],
+            'quantity' => ['required', 'numeric', 'min:0.01', 'max:9999999999.99'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($seedProduction, $validated, $request) {
+            $stock = Stock::with('item')
+                ->whereKey($validated['stock_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
+            $quantity = (float) $validated['quantity'];
+
+            if ((float) $stock->quantity < $quantity) {
+                throw ValidationException::withMessages([
+                    'stock_id' => "Stok {$stock->item?->name} tidak mencukupi.",
+                ]);
+            }
+
+            if (
+                $validated['role'] === 'bahan_utama'
+                && filled($seedProduction->rice_variety_id)
+                && $stock->item?->rice_variety_id !== $seedProduction->rice_variety_id
+            ) {
+                throw ValidationException::withMessages([
+                    'stock_id' => 'Bahan utama harus sesuai dengan varietas produksi yang dipilih.',
+                ]);
+            }
+
+            $input = $seedProduction->inputs()->create([
+                'stock_id' => $stock->id,
+                'item_id' => $stock->item_id,
+                'warehouse_id' => $stock->warehouse_id,
+                'role' => $validated['role'],
+                'quantity' => $quantity,
+                'unit' => $stock->item?->unit ?? $seedProduction->unit,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $balanceAfter = (float) $stock->quantity - $quantity;
+            $stock->update(['quantity' => $balanceAfter]);
+
+            StockMovement::create([
+                'stock_id' => $stock->id,
+                'item_id' => $stock->item_id,
+                'warehouse_id' => $stock->warehouse_id,
+                'movement_date' => $validated['movement_date'],
+                'type' => 'seed_production_input',
+                'quantity_in' => 0,
+                'quantity_out' => $quantity,
+                'balance_after' => $balanceAfter,
+                'reference_type' => 'seed_production',
+                'reference_id' => $input->id,
+                'reference_number' => $seedProduction->number,
+                'notes' => 'Tambahan bahan produksi '.$seedProduction->number,
+                'created_by' => $request->user()?->id,
+            ]);
+        });
+
+        return redirect()
+            ->route('seed-productions.show', $seedProduction)
+            ->with('success', 'Bahan produksi berhasil ditambahkan.');
     }
 
     private function availableStocks()

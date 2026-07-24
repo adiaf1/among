@@ -24,6 +24,7 @@ class SeedProductionStep extends Model
         'actual_date',
         'quantity',
         'cost_per_kg',
+        'cost_type',
         'cost',
         'status',
         'notes',

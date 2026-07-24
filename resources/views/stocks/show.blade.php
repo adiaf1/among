@@ -5,7 +5,12 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
         <div>
             <h4 class="mb-1">Kartu Stok</h4>
-            <p class="text-muted mb-0">{{ $stock->item->code }} - {{ $stock->item->name }} di {{ $stock->warehouse->name }}</p>
+            <p class="text-muted mb-0">
+                {{ $stock->item->code }} - {{ $stock->item->name }} di {{ $stock->warehouse->name }}
+                @if($stock->lot_number)
+                    | Lot {{ $stock->lot_number }}
+                @endif
+            </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('stocks.index') }}" class="btn btn-label-secondary">Kembali</a>
@@ -40,12 +45,8 @@
         <div class="col-md-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted mb-1">Status</div>
-                    @if((float) $stock->quantity <= (float) $stock->item->minimum_stock)
-                        <span class="badge bg-label-warning">Minimum</span>
-                    @else
-                        <span class="badge bg-label-success">Aman</span>
-                    @endif
+                    <div class="text-muted mb-1">No Lot</div>
+                    <h4 class="mb-0">{{ $stock->lot_number ?: '-' }}</h4>
                 </div>
             </div>
         </div>

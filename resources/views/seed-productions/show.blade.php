@@ -111,8 +111,92 @@
 
         <div class="col-12">
             <div class="card">
-                <div class="card-header border-bottom">
+                <div class="card-header border-bottom d-flex flex-column gap-3">
                     <h5 class="mb-0">Bahan Produksi</h5>
+                    @if($seedProduction->status === 'proses')
+                        <form method="POST" action="{{ route('seed-productions.inputs.store', $seedProduction) }}" class="row g-2 align-items-end">
+                            @csrf
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Tanggal</label>
+                                <input
+                                    type="date"
+                                    name="movement_date"
+                                    value="{{ old('movement_date', now()->toDateString()) }}"
+                                    class="form-control form-control-sm @error('movement_date') is-invalid @enderror"
+                                    required
+                                >
+                                @error('movement_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Peran</label>
+                                <select
+                                    name="role"
+                                    id="additional-production-input-role"
+                                    class="form-select form-select-sm @error('role') is-invalid @enderror"
+                                    required
+                                >
+                                    @foreach($inputRoles as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('role', 'pendukung') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('role')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small mb-1">Stok Bahan</label>
+                                <select
+                                    name="stock_id"
+                                    id="additional-production-input-stock"
+                                    class="form-select form-select-sm @error('stock_id') is-invalid @enderror"
+                                    data-selected="{{ old('stock_id') }}"
+                                    required
+                                >
+                                    <option value="">Pilih stok bahan</option>
+                                </select>
+                                @error('stock_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Jumlah</label>
+                                <input
+                                    type="number"
+                                    name="quantity"
+                                    value="{{ old('quantity') }}"
+                                    min="0.01"
+                                    max="9999999999.99"
+                                    step="0.01"
+                                    class="form-control form-control-sm @error('quantity') is-invalid @enderror"
+                                    placeholder="0"
+                                    required
+                                >
+                                @error('quantity')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-6 col-md-1">
+                                <label class="form-label small mb-1">Catatan</label>
+                                <input
+                                    type="text"
+                                    name="notes"
+                                    value="{{ old('notes') }}"
+                                    class="form-control form-control-sm @error('notes') is-invalid @enderror"
+                                    placeholder="-"
+                                >
+                                @error('notes')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-12 col-md-1 d-grid">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bx bx-plus"></i>
+                                </button>
+                            </div>
+                        </form>
+                    @endif
                 </div>
                 <div class="table-responsive">
                     <table class="table align-middle">
@@ -146,17 +230,78 @@
 
         <div class="col-12">
             <div class="card">
-                <div class="card-header border-bottom">
+                <div class="card-header border-bottom d-flex flex-column flex-lg-row justify-content-between gap-3">
                     <h5 class="mb-0">Tahapan Produksi</h5>
+                    <form method="POST" action="{{ route('seed-productions.steps.store', $seedProduction) }}" class="row g-2 align-items-end">
+                        @csrf
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small mb-1">Tahap</label>
+                            <input
+                                type="text"
+                                name="label"
+                                value="{{ old('label') }}"
+                                class="form-control form-control-sm"
+                                list="production-step-label-options"
+                                placeholder="Nama tahap"
+                                required
+                            >
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Tanggal</label>
+                            <input
+                                type="date"
+                                name="planned_date"
+                                value="{{ old('planned_date') }}"
+                                class="form-control form-control-sm"
+                            >
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Posisi</label>
+                            <select name="position" class="form-select form-select-sm">
+                                @foreach($stepPositions as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('position', 'end') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Acuan</label>
+                            <select name="reference_step_id" class="form-select form-select-sm">
+                                <option value="">-</option>
+                                @foreach($seedProduction->steps as $stepOption)
+                                    <option value="{{ $stepOption->id }}" @selected(old('reference_step_id') === $stepOption->id)>
+                                        {{ $stepOption->sort_order }}. {{ $stepOption->label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Biaya</label>
+                            <select name="cost_type" class="form-select form-select-sm">
+                                @foreach($stepCostTypes as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('cost_type', 'per_kg') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-1 d-grid">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bx bx-plus"></i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
+                <datalist id="production-step-label-options">
+                    @foreach($stepSuggestions as $label)
+                        <option value="{{ $label }}"></option>
+                    @endforeach
+                </datalist>
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
                             <tr>
                                 <th style="width: 72px;">Urut</th>
                                 <th style="min-width: 180px;">Tahap</th>
-                                <th style="min-width: 150px;">Tanggal Rencana</th>
-                                <th style="min-width: 150px;">Tanggal Aktual</th>
+                                <th style="min-width: 190px;">Tanggal</th>
+                                <th style="min-width: 140px;">Jenis Biaya</th>
                                 <th style="min-width: 140px;">Jumlah Kg</th>
                                 <th style="min-width: 160px;">Biaya / Kg</th>
                                 <th style="min-width: 170px;">Total Biaya</th>
@@ -168,26 +313,39 @@
                         <tbody>
                             @foreach($seedProduction->steps as $step)
                                 @php($formId = 'production-step-form-'.$step->id)
+                                @php($costType = old('cost_type', $step->cost_type ?? 'per_kg'))
                                 <tr>
                                     <td>{{ $step->sort_order }}</td>
-                                    <td class="fw-medium">{{ $step->label }}</td>
                                     <td>
                                         <input
-                                            type="date"
-                                            name="planned_date"
-                                            value="{{ old('planned_date', $step->planned_date?->toDateString()) }}"
-                                            class="form-control form-control-sm"
+                                            type="text"
+                                            name="label"
+                                            value="{{ old('label', $step->label) }}"
+                                            class="form-control form-control-sm fw-medium"
                                             form="{{ $formId }}"
+                                            list="production-step-label-options"
+                                            required
                                         >
                                     </td>
                                     <td>
                                         <input
                                             type="date"
-                                            name="actual_date"
-                                            value="{{ old('actual_date', $step->actual_date?->toDateString()) }}"
+                                            name="planned_date"
+                                            value="{{ old('planned_date', $step->actual_date?->toDateString() ?? $step->planned_date?->toDateString()) }}"
                                             class="form-control form-control-sm"
                                             form="{{ $formId }}"
                                         >
+                                    </td>
+                                    <td>
+                                        <select
+                                            name="cost_type"
+                                            class="form-select form-select-sm production-step-cost-type"
+                                            form="{{ $formId }}"
+                                        >
+                                            @foreach($stepCostTypes as $value => $label)
+                                                <option value="{{ $value }}" @selected($costType === $value)>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
                                     </td>
                                     <td>
                                         <input
@@ -213,6 +371,7 @@
                                                 class="form-control rupiah-input production-step-cost-per-kg"
                                                 form="{{ $formId }}"
                                                 placeholder="0"
+                                                @readonly($costType === 'langsung')
                                             >
                                         </div>
                                     </td>
@@ -227,7 +386,7 @@
                                                 class="form-control rupiah-input production-step-cost"
                                                 form="{{ $formId }}"
                                                 placeholder="0"
-                                                readonly
+                                                @readonly($costType === 'per_kg')
                                             >
                                         </div>
                                     </td>
@@ -270,6 +429,10 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const rupiahInputs = document.querySelectorAll('.rupiah-input');
+        const additionalStockOptions = @json($additionalStockOptions);
+        const productionRiceVarietyId = @json($seedProduction->rice_variety_id);
+        const additionalRoleSelect = document.getElementById('additional-production-input-role');
+        const additionalStockSelect = document.getElementById('additional-production-input-stock');
 
         function digits(value) {
             return String(value || '').replace(/\D/g, '');
@@ -283,16 +446,60 @@
 
         function syncRowCost(row) {
             const quantityInput = row.querySelector('.production-step-quantity');
+            const costTypeInput = row.querySelector('.production-step-cost-type');
             const costPerKgInput = row.querySelector('.production-step-cost-per-kg');
             const costInput = row.querySelector('.production-step-cost');
+            const costType = costTypeInput?.value || 'per_kg';
             const quantity = Number(quantityInput?.value || 0);
             const costPerKg = Number(digits(costPerKgInput?.value || 0));
 
-            if (!costInput || quantity <= 0 || costPerKg < 0) {
+            if (!costInput) {
+                return;
+            }
+
+            costInput.readOnly = costType === 'per_kg';
+
+            if (costPerKgInput) {
+                costPerKgInput.readOnly = costType === 'langsung';
+            }
+
+            if (costType === 'langsung') {
+                return;
+            }
+
+            if (quantity <= 0 || costPerKg < 0) {
+                costInput.value = '';
                 return;
             }
 
             costInput.value = formatRupiah(Math.round(quantity * costPerKg));
+        }
+
+        function renderAdditionalStockOptions() {
+            if (!additionalRoleSelect || !additionalStockSelect) {
+                return;
+            }
+
+            const selectedValue = additionalStockSelect.dataset.selected || additionalStockSelect.value;
+            const role = additionalRoleSelect.value;
+            const options = role === 'bahan_utama' && productionRiceVarietyId
+                ? additionalStockOptions.filter(function (option) {
+                    return option.rice_variety_id === productionRiceVarietyId;
+                })
+                : additionalStockOptions;
+
+            additionalStockSelect.innerHTML = [
+                '<option value="">Pilih stok bahan</option>',
+                ...options.map(function (option) {
+                    return `<option value="${option.value}">${option.label}</option>`;
+                })
+            ].join('');
+
+            if (options.some(function (option) { return option.value === selectedValue; })) {
+                additionalStockSelect.value = selectedValue;
+            }
+
+            additionalStockSelect.dataset.selected = '';
         }
 
         rupiahInputs.forEach(function (input) {
@@ -309,6 +516,17 @@
                 syncRowCost(input.closest('tr'));
             });
         });
+
+        document.querySelectorAll('.production-step-cost-type').forEach(function (input) {
+            syncRowCost(input.closest('tr'));
+
+            input.addEventListener('change', function () {
+                syncRowCost(input.closest('tr'));
+            });
+        });
+
+        renderAdditionalStockOptions();
+        additionalRoleSelect?.addEventListener('change', renderAdditionalStockOptions);
     });
 </script>
 @endsection

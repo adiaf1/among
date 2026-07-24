@@ -162,6 +162,7 @@ class PurchaseController extends Controller
                     [
                         'item_id' => $detail['item_id'],
                         'warehouse_id' => $detail['warehouse_id'],
+                        'lot_number' => null,
                     ],
                     ['quantity' => 0]
                 );

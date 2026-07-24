@@ -235,7 +235,7 @@
                                                     data-rice-variety-id="{{ $stock->item?->rice_variety_id }}"
                                                     @selected(($oldInput['stock_id'] ?? '') === $stock->id)
                                                 >
-                                                    {{ $stock->item?->code }} - {{ $stock->item?->name }} | {{ $stock->warehouse?->name }} | Stok {{ number_format((float) $stock->quantity, 2, ',', '.') }} {{ strtoupper($stock->item?->unit) }}
+                                                    {{ $stock->item?->code }} - {{ $stock->item?->name }} | {{ $stock->warehouse?->name }} | Lot {{ $stock->lot_number ?: '-' }} | Stok {{ number_format((float) $stock->quantity, 2, ',', '.') }} {{ strtoupper($stock->item?->unit) }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -295,7 +295,7 @@
 @php
     $stockOptions = $stocks->map(fn ($stock) => [
         'value' => $stock->id,
-        'label' => ($stock->item?->code ?? '-').' - '.($stock->item?->name ?? '-').' | '.($stock->warehouse?->name ?? '-').' | Stok '.number_format((float) $stock->quantity, 2, ',', '.').' '.strtoupper($stock->item?->unit ?? ''),
+        'label' => ($stock->item?->code ?? '-').' - '.($stock->item?->name ?? '-').' | '.($stock->warehouse?->name ?? '-').' | Lot '.($stock->lot_number ?: '-').' | Stok '.number_format((float) $stock->quantity, 2, ',', '.').' '.strtoupper($stock->item?->unit ?? ''),
         'rice_variety_id' => $stock->item?->rice_variety_id,
     ])->values();
     $harvestLotOptions = $harvestLots->map(fn ($seedGrowing) => [

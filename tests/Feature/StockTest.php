@@ -62,6 +62,31 @@ class StockTest extends TestCase
         ]);
     }
 
+    public function test_stock_adjustment_can_use_lot_number(): void
+    {
+        $editor = $this->userWithRole('editor');
+        [$item, $warehouse] = $this->itemAndWarehouse();
+
+        $response = $this->actingAs($editor)->post(route('stocks.store'), [
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'lot_number' => ' lot-001 ',
+            'quantity' => 500,
+            'movement_date' => '2026-06-10',
+            'notes' => 'Stok awal lot.',
+        ]);
+
+        $stock = Stock::first();
+
+        $response->assertRedirect(route('stocks.show', $stock));
+        $this->assertDatabaseHas('stocks', [
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse->id,
+            'lot_number' => 'LOT-001',
+            'quantity' => 500,
+        ]);
+    }
+
     public function test_adjustment_down_records_quantity_out(): void
     {
         $admin = $this->userWithRole('admin');

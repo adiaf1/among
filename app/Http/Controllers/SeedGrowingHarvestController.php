@@ -49,6 +49,7 @@ class SeedGrowingHarvestController extends Controller
                 [
                     'item_id' => $validated['harvest_item_id'],
                     'warehouse_id' => $validated['harvest_warehouse_id'],
+                    'lot_number' => $seedGrowing->lot_number,
                 ],
                 ['quantity' => 0]
             );
@@ -63,6 +64,7 @@ class SeedGrowingHarvestController extends Controller
                     $oldStock = Stock::lockForUpdate()
                         ->where('item_id', $oldItemId)
                         ->where('warehouse_id', $oldWarehouseId)
+                        ->where('lot_number', $seedGrowing->lot_number)
                         ->first();
 
                     if ($oldStock && $oldQuantity > 0) {

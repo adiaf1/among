@@ -76,13 +76,17 @@ class SeedProductionTest extends TestCase
             'reference_type' => 'seed_production',
             'reference_number' => $seedProduction->number,
         ]);
-        $this->assertDatabaseCount('seed_production_steps', 9);
+        $this->assertDatabaseCount('seed_production_steps', 8);
         $this->assertDatabaseHas('seed_production_steps', [
             'seed_production_id' => $seedProduction->id,
             'stage' => 'pengovenan',
             'sort_order' => 1,
             'planned_date' => '2026-09-25',
             'status' => 'terjadwal',
+        ]);
+        $this->assertDatabaseMissing('seed_production_steps', [
+            'seed_production_id' => $seedProduction->id,
+            'stage' => 'pendinginan_benih',
         ]);
         $this->assertDatabaseMissing('seed_production_steps', [
             'seed_production_id' => $seedProduction->id,
@@ -95,6 +99,7 @@ class SeedProductionTest extends TestCase
         $this->assertDatabaseHas('seed_production_steps', [
             'seed_production_id' => $seedProduction->id,
             'stage' => 'siap_salur',
+            'sort_order' => 8,
             'planned_date' => '2026-10-04',
             'status' => 'terjadwal',
         ]);
@@ -194,10 +199,12 @@ class SeedProductionTest extends TestCase
         $response = $this->actingAs($editor)->patch(
             route('seed-productions.steps.update', [$seedProduction, $step]),
             [
+                'label' => $step->label,
                 'planned_date' => '2026-09-25',
                 'actual_date' => '2026-09-26',
                 'quantity' => 1000,
                 'cost_per_kg' => 'Rp 150',
+                'cost_type' => 'per_kg',
                 'status' => 'selesai',
                 'notes' => 'Oven gabah basah.',
             ]
@@ -209,10 +216,158 @@ class SeedProductionTest extends TestCase
             'actual_date' => '2026-09-26',
             'quantity' => 1000,
             'cost_per_kg' => 150,
+            'cost_type' => 'per_kg',
             'cost' => 150000,
             'status' => 'selesai',
             'notes' => 'Oven gabah basah.',
             'updated_by' => $editor->id,
+        ]);
+    }
+
+    public function test_editor_can_update_production_step_direct_cost(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+        $step = $seedProduction->steps()->where('stage', 'pengambilan_sampel')->firstOrFail();
+
+        $response = $this->actingAs($editor)->patch(
+            route('seed-productions.steps.update', [$seedProduction, $step]),
+            [
+                'label' => $step->label,
+                'planned_date' => '2026-09-28',
+                'actual_date' => '2026-09-28',
+                'quantity' => 2,
+                'cost_per_kg' => 'Rp 999',
+                'cost_type' => 'langsung',
+                'cost' => 'Rp 250.000',
+                'status' => 'selesai',
+                'notes' => 'Biaya pengambilan sampel.',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseHas('seed_production_steps', [
+            'id' => $step->id,
+            'quantity' => 2,
+            'cost_per_kg' => null,
+            'cost_type' => 'langsung',
+            'cost' => 250000,
+            'status' => 'selesai',
+            'notes' => 'Biaya pengambilan sampel.',
+            'updated_by' => $editor->id,
+        ]);
+    }
+
+    public function test_empty_actual_date_uses_planned_date_when_updating_production_step(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+        $step = $seedProduction->steps()->where('stage', 'pengipasan_blower')->firstOrFail();
+
+        $response = $this->actingAs($editor)->patch(
+            route('seed-productions.steps.update', [$seedProduction, $step]),
+            [
+                'label' => $step->label,
+                'planned_date' => '2026-09-27',
+                'actual_date' => null,
+                'quantity' => 750,
+                'cost_per_kg' => 'Rp 25',
+                'cost_type' => 'per_kg',
+                'status' => 'selesai',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseHas('seed_production_steps', [
+            'id' => $step->id,
+            'planned_date' => '2026-09-27',
+            'actual_date' => '2026-09-27',
+            'cost' => 18750,
+            'status' => 'selesai',
+        ]);
+    }
+
+    public function test_editor_can_add_manual_production_step_before_reference_step(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+        $packingStep = $seedProduction->steps()->where('stage', 'packing')->firstOrFail();
+
+        $response = $this->actingAs($editor)->post(
+            route('seed-productions.steps.store', $seedProduction),
+            [
+                'label' => 'Sortasi Manual',
+                'planned_date' => '2026-10-02',
+                'position' => 'before',
+                'reference_step_id' => $packingStep->id,
+                'cost_type' => 'langsung',
+                'notes' => 'Tahap tambahan sebelum packing.',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseCount('seed_production_steps', 9);
+        $this->assertDatabaseHas('seed_production_steps', [
+            'seed_production_id' => $seedProduction->id,
+            'stage' => 'sortasi_manual',
+            'label' => 'Sortasi Manual',
+            'sort_order' => 7,
+            'planned_date' => '2026-10-02',
+            'cost_type' => 'langsung',
+            'status' => 'terjadwal',
+            'notes' => 'Tahap tambahan sebelum packing.',
+            'updated_by' => $editor->id,
+        ]);
+        $this->assertDatabaseHas('seed_production_steps', [
+            'id' => $packingStep->id,
+            'sort_order' => 8,
+        ]);
+        $this->assertDatabaseHas('seed_production_steps', [
+            'seed_production_id' => $seedProduction->id,
+            'stage' => 'siap_salur',
+            'sort_order' => 9,
+        ]);
+    }
+
+    public function test_editor_can_add_additional_production_input_and_record_stock_movement(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+        $stock = Stock::firstOrFail();
+
+        $response = $this->actingAs($editor)->post(
+            route('seed-productions.inputs.store', $seedProduction),
+            [
+                'movement_date' => '2026-09-27',
+                'stock_id' => $stock->id,
+                'role' => 'bahan_utama',
+                'quantity' => 50,
+                'notes' => 'Tambahan gabah untuk proses blower.',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseHas('seed_production_inputs', [
+            'seed_production_id' => $seedProduction->id,
+            'stock_id' => $stock->id,
+            'role' => 'bahan_utama',
+            'quantity' => 50,
+            'notes' => 'Tambahan gabah untuk proses blower.',
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'id' => $stock->id,
+            'quantity' => 150,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'stock_id' => $stock->id,
+            'type' => 'seed_production_input',
+            'movement_date' => '2026-09-27',
+            'quantity_out' => 50,
+            'balance_after' => 150,
+            'reference_type' => 'seed_production',
+            'reference_number' => $seedProduction->number,
+            'notes' => 'Tambahan bahan produksi '.$seedProduction->number,
+            'created_by' => $editor->id,
         ]);
     }
 
@@ -225,10 +380,12 @@ class SeedProductionTest extends TestCase
         $response = $this->actingAs($editor)->patch(
             route('seed-productions.steps.update', [$seedProduction, $step]),
             [
+                'label' => $step->label,
                 'planned_date' => '2026-10-04',
                 'actual_date' => '2026-10-04',
                 'quantity' => 900,
                 'cost_per_kg' => 0,
+                'cost_type' => 'per_kg',
                 'status' => 'selesai',
             ]
         );

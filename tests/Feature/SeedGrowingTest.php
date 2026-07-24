@@ -332,6 +332,7 @@ class SeedGrowingTest extends TestCase
         $data = $this->masterData();
         $seedGrowing = SeedGrowing::create($this->payload($data, [
             'status' => 'berjalan',
+            'lot_number' => 'LOT-PANEN-001',
         ]));
 
         $response = $this->actingAs($editor)->patch(
@@ -424,6 +425,7 @@ class SeedGrowingTest extends TestCase
         $data = $this->masterData();
         $seedGrowing = SeedGrowing::create($this->payload($data, [
             'status' => 'berjalan',
+            'lot_number' => 'LOT-PANEN-001',
         ]));
 
         $response = $this->actingAs($editor)->patch(
@@ -462,6 +464,7 @@ class SeedGrowingTest extends TestCase
         $this->assertDatabaseHas('stocks', [
             'item_id' => $data['harvestItem']->id,
             'warehouse_id' => $data['warehouse']->id,
+            'lot_number' => 'LOT-PANEN-001',
             'quantity' => 8000,
         ]);
         $this->assertDatabaseHas('stock_movements', [

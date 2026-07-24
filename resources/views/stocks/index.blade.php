@@ -28,7 +28,7 @@
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Cari barang atau gudang"
+                        placeholder="Cari barang, gudang, atau no lot"
                     >
                 </div>
                 <div class="col-md-3">
@@ -66,6 +66,7 @@
                     <tr>
                         <th>Barang</th>
                         <th>Gudang</th>
+                        <th>No Lot</th>
                         <th>Satuan</th>
                         <th>Stok Minimum</th>
                         <th>Saldo Stok</th>
@@ -84,6 +85,7 @@
                                 <span class="fw-medium">{{ $stock->warehouse->code }}</span>
                                 <div class="text-muted small">{{ $stock->warehouse->name }}</div>
                             </td>
+                            <td>{{ $stock->lot_number ?: '-' }}</td>
                             <td>{{ strtoupper($stock->item->unit) }}</td>
                             <td>{{ number_format((float) $stock->item->minimum_stock, 2, ',', '.') }}</td>
                             <td>{{ number_format((float) $stock->quantity, 2, ',', '.') }}</td>
@@ -102,7 +104,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-5">Belum ada saldo stok.</td>
+                            <td colspan="8" class="text-center text-muted py-5">Belum ada saldo stok.</td>
                         </tr>
                     @endforelse
                 </tbody>
