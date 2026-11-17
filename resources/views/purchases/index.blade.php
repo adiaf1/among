@@ -22,6 +22,7 @@
     <div class="card">
         <div class="card-header border-bottom">
             <form method="GET" action="{{ route('purchases.index') }}" class="row g-3 align-items-center">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <div class="col-md-3 col-lg-2">
                     <label for="start_date" class="form-label mb-1">Tanggal Awal</label>
                     <input
@@ -30,6 +31,7 @@
                         name="start_date"
                         value="{{ $startDate }}"
                         class="form-control"
+                        onchange="this.form.submit()"
                     >
                 </div>
                 <div class="col-md-3 col-lg-2">
@@ -40,6 +42,7 @@
                         name="end_date"
                         value="{{ $endDate }}"
                         class="form-control"
+                        onchange="this.form.submit()"
                     >
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -53,12 +56,11 @@
                         placeholder="Cari nomor, supplier, atau petani"
                     >
                 </div>
-                <div class="col-md-auto d-flex gap-2 align-self-end">
-                    <button type="submit" class="btn btn-label-primary">Filter</button>
-                    @if($search || $startDate !== now()->toDateString() || $endDate !== now()->toDateString())
+                @if($search || $startDate !== now()->toDateString() || $endDate !== now()->toDateString())
+                    <div class="col-md-auto align-self-end">
                         <a href="{{ route('purchases.index') }}" class="btn btn-label-secondary">Reset</a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -102,8 +104,28 @@
             </table>
         </div>
 
-        <div class="card-footer">
-            {{ $purchases->links('pagination::bootstrap-4') }}
+        <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <form method="GET" action="{{ route('purchases.index') }}" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="start_date" value="{{ $startDate }}">
+                    <input type="hidden" name="end_date" value="{{ $endDate }}">
+                    @if($search)
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
+                    <label for="per_page" class="text-muted small mb-0">Tampilkan</label>
+                    <select id="per_page" name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <span class="text-muted small">
+                    Menampilkan {{ $purchases->firstItem() ?? 0 }} - {{ $purchases->lastItem() ?? 0 }} dari {{ $purchases->total() }} data
+                </span>
+            </div>
+            <div>
+                {{ $purchases->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 </div>

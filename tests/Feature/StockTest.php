@@ -32,6 +32,40 @@ class StockTest extends TestCase
         $response->assertSee('Gudang Benih Utama');
     }
 
+    public function test_admin_can_filter_stocks_with_search_and_warehouse(): void
+    {
+        $admin = $this->userWithRole('admin');
+        [$item, $warehouse1] = $this->itemAndWarehouse();
+        $warehouse2 = Warehouse::create([
+            'code' => 'GDG002',
+            'name' => 'Gudang Benih Cadangan',
+            'is_active' => true,
+        ]);
+
+        Stock::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse1->id,
+            'lot_number' => 'LOT-A',
+            'quantity' => 1000,
+        ]);
+
+        Stock::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $warehouse2->id,
+            'lot_number' => 'LOT-B',
+            'quantity' => 500,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('stocks.index', [
+            'search' => 'Ciherang',
+            'warehouse_id' => $warehouse2->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('LOT-B');
+        $response->assertDontSee('LOT-A');
+    }
+
     public function test_editor_can_create_initial_stock_adjustment(): void
     {
         $editor = $this->userWithRole('editor');

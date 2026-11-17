@@ -41,6 +41,9 @@ class PurchaseController extends Controller
         $search = $request->string('search')->toString();
         $startDate = $request->date('start_date')?->toDateString() ?? now()->toDateString();
         $endDate = $request->date('end_date')?->toDateString() ?? $startDate;
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         if ($startDate > $endDate) {
             [$startDate, $endDate] = [$endDate, $startDate];
@@ -64,10 +67,10 @@ class PurchaseController extends Controller
             })
             ->orderByDesc('purchase_date')
             ->latest('created_at')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('purchases.index', compact('purchases', 'search', 'startDate', 'endDate'));
+        return view('purchases.index', compact('purchases', 'search', 'startDate', 'endDate', 'perPage'));
     }
 
     public function create(): View

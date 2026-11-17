@@ -19,17 +19,22 @@ class StockController extends Controller
         $search = $request->string('search')->toString();
         $itemId = $request->string('item_id')->toString();
         $warehouseId = $request->string('warehouse_id')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $stocks = Stock::query()
             ->with(['item', 'warehouse'])
             ->when($search, function ($query) use ($search) {
-                $query->whereHas('item', function ($query) use ($search) {
-                    $query->where('code', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%");
-                })->orWhereHas('warehouse', function ($query) use ($search) {
-                    $query->where('code', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%");
-                })->orWhere('lot_number', 'like', "%{$search}%");
+                $query->where(function ($query) use ($search) {
+                    $query->whereHas('item', function ($query) use ($search) {
+                        $query->where('code', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%");
+                    })->orWhereHas('warehouse', function ($query) use ($search) {
+                        $query->where('code', 'like', "%{$search}%")
+                            ->orWhere('name', 'like', "%{$search}%");
+                    })->orWhere('lot_number', 'like', "%{$search}%");
+                });
             })
             ->when($itemId, fn ($query) => $query->where('item_id', $itemId))
             ->when($warehouseId, fn ($query) => $query->where('warehouse_id', $warehouseId))
@@ -37,7 +42,7 @@ class StockController extends Controller
             ->join('warehouses', 'stocks.warehouse_id', '=', 'warehouses.id')
             ->latest('stocks.created_at')
             ->select('stocks.*')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('stocks.index', [
@@ -45,6 +50,7 @@ class StockController extends Controller
             'search' => $search,
             'itemId' => $itemId,
             'warehouseId' => $warehouseId,
+            'perPage' => $perPage,
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
         ]);

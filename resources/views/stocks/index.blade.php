@@ -22,6 +22,7 @@
     <div class="card">
         <div class="card-header border-bottom">
             <form method="GET" action="{{ route('stocks.index') }}" class="row g-3 align-items-center">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <div class="col-md-4">
                     <input
                         type="search"
@@ -32,7 +33,7 @@
                     >
                 </div>
                 <div class="col-md-3">
-                    <select name="item_id" class="form-select">
+                    <select name="item_id" class="form-select" onchange="this.form.submit()">
                         <option value="">Semua barang</option>
                         @foreach($items as $item)
                             <option value="{{ $item->id }}" @selected($itemId === $item->id)>
@@ -42,7 +43,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <select name="warehouse_id" class="form-select">
+                    <select name="warehouse_id" class="form-select" onchange="this.form.submit()">
                         <option value="">Semua gudang</option>
                         @foreach($warehouses as $warehouse)
                             <option value="{{ $warehouse->id }}" @selected($warehouseId === $warehouse->id)>
@@ -51,12 +52,11 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-label-primary">Filter</button>
-                    @if($search || $itemId || $warehouseId)
+                @if($search || $itemId || $warehouseId)
+                    <div class="col-md-auto">
                         <a href="{{ route('stocks.index') }}" class="btn btn-label-secondary">Reset</a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -111,8 +111,32 @@
             </table>
         </div>
 
-        <div class="card-footer">
-            {{ $stocks->links('pagination::bootstrap-4') }}
+        <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <form method="GET" action="{{ route('stocks.index') }}" class="d-flex align-items-center gap-2">
+                    @if($search)
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
+                    @if($itemId)
+                        <input type="hidden" name="item_id" value="{{ $itemId }}">
+                    @endif
+                    @if($warehouseId)
+                        <input type="hidden" name="warehouse_id" value="{{ $warehouseId }}">
+                    @endif
+                    <label for="per_page" class="text-muted small mb-0">Tampilkan</label>
+                    <select id="per_page" name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <span class="text-muted small">
+                    Menampilkan {{ $stocks->firstItem() ?? 0 }} - {{ $stocks->lastItem() ?? 0 }} dari {{ $stocks->total() }} data
+                </span>
+            </div>
+            <div>
+                {{ $stocks->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 </div>
