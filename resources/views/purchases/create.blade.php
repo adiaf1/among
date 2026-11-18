@@ -2,9 +2,14 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="py-4">
-        <h4 class="mb-1">Tambah Pembelian Barang</h4>
-        <p class="text-muted mb-0">Barang yang disimpan akan langsung menambah stok gudang tujuan.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
+        <div>
+            <h4 class="mb-1">Tambah Pembelian Barang</h4>
+            <p class="text-muted mb-0">Barang yang disimpan akan langsung menambah stok gudang tujuan.</p>
+        </div>
+        <a href="{{ route('purchases.index') }}" class="btn btn-label-secondary">
+            <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+        </a>
     </div>
 
     @if(session('success'))
@@ -15,7 +20,11 @@
     @endif
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0">Form Pembelian Barang</h5>
+            <small class="text-body-secondary float-end">Persediaan</small>
+        </div>
+        <div class="card-body pt-4">
             <form method="POST" action="{{ route('purchases.store') }}">
                 @csrf
 
@@ -93,7 +102,7 @@
                         <label for="transport_type" class="form-label">Jenis Angkutan</label>
                         <div class="source-combobox position-relative" data-free-combobox="transport_type">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bx bxs-truck"></i></span>
+                                <span class="input-group-text"><i class="icon-base bx bxs-truck"></i></span>
                                 <input
                                     type="search"
                                     class="form-control @error('transport_type') is-invalid @enderror"
@@ -106,7 +115,7 @@
                                     data-combobox-input
                                 >
                                 <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan isian">
-                                    <i class="bx bx-x"></i>
+                                    <i class="icon-base bx bx-x"></i>
                                 </button>
                             </div>
                             <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -120,7 +129,7 @@
                         <label for="vehicle_plate_number" class="form-label">No Pol Kendaraan</label>
                         <div class="source-combobox position-relative" data-free-combobox="vehicle_plate_number">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bx bx-id-card"></i></span>
+                                <span class="input-group-text"><i class="icon-base bx bx-id-card"></i></span>
                                 <input
                                     type="search"
                                     class="form-control @error('vehicle_plate_number') is-invalid @enderror"
@@ -134,7 +143,7 @@
                                     data-uppercase
                                 >
                                 <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan isian">
-                                    <i class="bx bx-x"></i>
+                                    <i class="icon-base bx bx-x"></i>
                                 </button>
                             </div>
                             <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -161,13 +170,14 @@
                     </div>
 
                     <div class="col-md-6" data-source-field="supplier">
-                        <label for="supplier_id" class="form-label">Supplier <span class="text-danger">*</span></label>
+                        <label for="supplier_search" class="form-label">Supplier <span class="text-danger">*</span></label>
                         <div class="source-combobox position-relative" data-source-combobox="supplier">
                             <input type="hidden" id="supplier_id" name="supplier_id" value="{{ $selectedSupplierId }}">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
                                 <input
                                     type="search"
+                                    id="supplier_search"
                                     class="form-control @error('supplier_id') is-invalid @enderror"
                                     value="{{ $selectedSupplier ? "{$selectedSupplier->code} - {$selectedSupplier->name}" : '' }}"
                                     placeholder="Cari supplier"
@@ -175,7 +185,7 @@
                                     data-combobox-input
                                 >
                                 <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
-                                    <i class="bx bx-x"></i>
+                                    <i class="icon-base bx bx-x"></i>
                                 </button>
                             </div>
                             <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -187,13 +197,14 @@
                     </div>
 
                     <div class="col-md-6" data-source-field="farmer">
-                        <label for="farmer_id" class="form-label">Petani <span class="text-danger">*</span></label>
+                        <label for="farmer_search" class="form-label">Petani <span class="text-danger">*</span></label>
                         <div class="source-combobox position-relative" data-source-combobox="farmer">
                             <input type="hidden" id="farmer_id" name="farmer_id" value="{{ $selectedFarmerId }}">
                             <div class="input-group">
-                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
                                 <input
                                     type="search"
+                                    id="farmer_search"
                                     class="form-control @error('farmer_id') is-invalid @enderror"
                                     value="{{ $selectedFarmer ? "{$selectedFarmer->code} - {$selectedFarmer->name}" : '' }}"
                                     placeholder="Cari petani"
@@ -201,7 +212,7 @@
                                     data-combobox-input
                                 >
                                 <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
-                                    <i class="bx bx-x"></i>
+                                    <i class="icon-base bx bx-x"></i>
                                 </button>
                             </div>
                             <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -236,18 +247,23 @@
                 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                     <h6 class="mb-0">Detail Barang</h6>
                     <button type="button" class="btn btn-label-primary btn-sm" id="add-purchase-item-row">
-                        <i class="bx bx-plus me-1"></i> Tambah Baris
+                        <i class="icon-base bx bx-plus me-1"></i> Tambah Baris
                     </button>
                 </div>
+
+                @error('items')
+                    <div class="alert alert-danger" role="alert">{{ $message }}</div>
+                @enderror
 
                 <div class="table-responsive purchase-items-table-wrap mb-4">
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
                                 <th style="min-width: 260px;">Barang</th>
-                                <th style="min-width: 240px;">Gudang Tujuan</th>
-                                <th style="min-width: 140px;">Jumlah</th>
-                                <th style="min-width: 160px;">Harga Satuan</th>
+                                <th style="min-width: 220px;">Gudang Tujuan</th>
+                                <th style="min-width: 130px;">Jumlah</th>
+                                <th style="min-width: 150px;">Harga Satuan</th>
+                                <th style="min-width: 140px;" class="text-end">Subtotal</th>
                                 <th style="width: 72px;" class="text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -271,7 +287,7 @@
                                         <div class="source-combobox position-relative" data-item-combobox>
                                             <input type="hidden" data-field="item_id" name="items[{{ $index }}][item_id]" value="{{ $oldItem['item_id'] ?? '' }}">
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                                <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
                                                 <input
                                                     type="search"
                                                     class="form-control @error("items.$index.item_id") is-invalid @enderror"
@@ -281,7 +297,7 @@
                                                     data-combobox-input
                                                 >
                                                 <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
-                                                    <i class="bx bx-x"></i>
+                                                    <i class="icon-base bx bx-x"></i>
                                                 </button>
                                             </div>
                                             <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -341,14 +357,22 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </td>
+                                    <td class="text-end fw-medium text-nowrap" data-row-subtotal>Rp 0</td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-icon btn-label-danger" data-remove-row title="Hapus baris">
-                                            <i class="bx bx-trash"></i>
+                                            <i class="icon-base bx bx-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-end">Total Pembelian</th>
+                                <th class="text-end fw-bold text-nowrap" id="purchase-grand-total">Rp 0</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -871,11 +895,41 @@
             updateRowUnit(row, itemByValue(hiddenInput.value));
         };
 
+        const formatCurrency = function (amount) {
+            return 'Rp ' + Number(amount || 0).toLocaleString('id-ID', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            });
+        };
+
+        const updateTotals = function () {
+            let grandTotal = 0;
+
+            tableBody.querySelectorAll('[data-purchase-item-row]').forEach(function (row) {
+                const qty = parseFloat(row.querySelector('[data-field="quantity"]')?.value || '0') || 0;
+                const priceRaw = (row.querySelector('[data-field="unit_price"]')?.value || '').replace(/\./g, '');
+                const price = parseFloat(priceRaw) || 0;
+                const subtotal = qty * price;
+                grandTotal += subtotal;
+
+                const subtotalEl = row.querySelector('[data-row-subtotal]');
+                if (subtotalEl) {
+                    subtotalEl.textContent = formatCurrency(subtotal);
+                }
+            });
+
+            const grandTotalEl = document.getElementById('purchase-grand-total');
+            if (grandTotalEl) {
+                grandTotalEl.textContent = formatCurrency(grandTotal);
+            }
+        };
+
         const bindMoneyInput = function (input) {
             input.value = formatNumber(input.value);
 
             input.addEventListener('input', function () {
                 input.value = formatNumber(input.value);
+                updateTotals();
             });
         };
 
@@ -889,6 +943,8 @@
             tableBody.querySelectorAll('[data-remove-row]').forEach(function (button) {
                 button.disabled = tableBody.querySelectorAll('[data-purchase-item-row]').length === 1;
             });
+
+            updateTotals();
         };
 
         const createRow = function () {
@@ -899,10 +955,10 @@
                     <div class="source-combobox position-relative" data-item-combobox>
                         <input type="hidden" data-field="item_id">
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bx bx-search"></i></span>
+                            <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
                             <input type="search" class="form-control" placeholder="Cari barang" autocomplete="off" data-combobox-input>
                             <button type="button" class="btn btn-outline-secondary" data-combobox-clear title="Bersihkan pilihan">
-                                <i class="bx bx-x"></i>
+                                <i class="icon-base bx bx-x"></i>
                             </button>
                         </div>
                         <div class="source-combobox-menu d-none" data-combobox-menu></div>
@@ -921,9 +977,10 @@
                     <input type="text" inputmode="numeric" class="form-control" data-field="unit_price" data-money-input required>
                     <div class="form-text" data-unit-price-label>Harga per satuan barang.</div>
                 </td>
+                <td class="text-end fw-medium text-nowrap" data-row-subtotal>Rp 0</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-icon btn-label-danger" data-remove-row title="Hapus baris">
-                        <i class="bx bx-trash"></i>
+                        <i class="icon-base bx bx-trash"></i>
                     </button>
                 </td>
             `;
@@ -933,6 +990,12 @@
 
             return row;
         };
+
+        tableBody.addEventListener('input', function (event) {
+            if (event.target.matches('[data-field="quantity"]')) {
+                updateTotals();
+            }
+        });
 
         document.querySelectorAll('[data-item-combobox]').forEach(initItemCombobox);
         document.querySelectorAll('[data-money-input]').forEach(bindMoneyInput);

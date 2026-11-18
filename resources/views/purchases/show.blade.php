@@ -17,26 +17,39 @@
 
         @media print {
             @page {
-                margin: 14mm;
+                size: A4 portrait;
+                margin: 10mm;
             }
 
+            html,
             body {
                 background: #fff !important;
                 color: #111 !important;
                 font-size: 12px;
+                line-height: 1.45;
             }
 
             #layout-navbar,
             #layout-menu,
+            #template-customizer,
             .content-footer,
             .screen-document,
             .alert {
                 display: none !important;
             }
 
-            .container-xxl {
+            .layout-wrapper,
+            .layout-container,
+            .layout-page,
+            .content-wrapper,
+            .container-xxl,
+            .container-p-y {
+                display: block !important;
+                margin: 0 !important;
                 max-width: 100% !important;
+                min-height: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
             }
 
             .print-document {
@@ -44,48 +57,55 @@
             }
 
             .print-document h3,
+            .print-document h4,
             .print-document h5,
             .print-document p {
                 color: #111 !important;
             }
 
             .print-header {
+                align-items: flex-end;
                 border-bottom: 2px solid #111;
-                margin-bottom: 18px;
-                padding-bottom: 12px;
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 16px;
+                padding-bottom: 10px;
             }
 
             .print-title {
-                border-bottom: 1px solid #111;
-                display: inline-block;
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 700;
-                margin: 8px 0 18px;
-                padding-bottom: 2px;
+                letter-spacing: 0.4px;
                 text-transform: uppercase;
             }
 
             .print-meta {
                 display: grid;
-                gap: 18px;
+                gap: 24px;
                 grid-template-columns: 1fr 1fr;
-                margin-bottom: 18px;
+                margin-bottom: 16px;
             }
 
-            .print-meta table,
-            .print-summary table {
+            .print-meta table {
+                border-collapse: collapse;
                 width: 100%;
             }
 
-            .print-meta td,
-            .print-summary td {
+            .print-meta td {
                 padding: 2px 0;
                 vertical-align: top;
             }
 
-            .print-meta td:first-child,
-            .print-summary td:first-child {
+            .print-meta td:first-child {
+                font-weight: 600;
+                padding-right: 8px;
+                white-space: nowrap;
                 width: 120px;
+            }
+
+            .print-meta td:nth-child(2) {
+                padding-right: 6px;
+                width: 10px;
             }
 
             .print-table {
@@ -93,118 +113,126 @@
                 width: 100%;
             }
 
+            .print-table tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
             .print-table th,
             .print-table td {
                 border: 1px solid #111;
-                padding: 7px;
+                padding: 6px 8px;
                 vertical-align: top;
             }
 
             .print-table th {
+                -webkit-print-color-adjust: exact;
                 background: #f2f2f2 !important;
                 font-weight: 700;
+                print-color-adjust: exact;
                 text-align: center;
             }
 
             .print-signatures {
+                break-inside: avoid;
                 display: grid;
-                gap: 28px;
-                grid-template-columns: repeat(3, 1fr);
-                margin-top: 36px;
+                gap: 48px;
+                grid-template-columns: repeat(2, 1fr);
+                margin-top: 32px;
+                page-break-inside: avoid;
                 text-align: center;
             }
 
             .signature-box {
-                min-height: 130px;
-                position: relative;
-            }
-
-            .stamp-box {
-                border: 1px dashed #777;
-                border-radius: 50%;
-                color: #555 !important;
-                font-size: 11px;
-                height: 82px;
-                left: 50%;
-                line-height: 1.2;
-                margin-left: -41px;
-                padding-top: 24px;
-                position: absolute;
-                top: 28px;
-                width: 82px;
+                align-items: center;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                min-height: 110px;
             }
 
             .signature-line {
                 border-top: 1px solid #111;
-                bottom: 0;
-                left: 10%;
-                padding-top: 6px;
-                position: absolute;
-                right: 10%;
+                margin-top: auto;
+                padding-top: 5px;
+                width: 75%;
             }
 
             .text-end-print {
                 text-align: right;
+                white-space: nowrap;
             }
         }
     </style>
 
     <div class="print-document">
         <div class="print-header">
-            <h3 class="mb-1">{{ config('app.name') }}</h3>
-            <p class="mb-0">Tanda Terima Pembelian Barang</p>
-        </div>
-
-        <div class="text-center">
-            <div class="print-title">Tanda Terima / Invoice Pembelian</div>
+            <div>
+                <h3 class="mb-1">{{ config('app.name') }}</h3>
+                <p class="mb-0">Tanda Terima Pembelian Barang</p>
+            </div>
+            <div class="text-end">
+                <div class="print-title">Invoice Pembelian</div>
+                <div>{{ $purchase->number }}</div>
+            </div>
         </div>
 
         <div class="print-meta">
             <table>
                 <tr>
                     <td>Nomor</td>
-                    <td>: {{ $purchase->number }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->number }}</td>
                 </tr>
                 <tr>
                     <td>Tanggal</td>
-                    <td>: {{ $purchase->purchase_date?->format('d M Y') }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->purchase_date?->format('d M Y') }}</td>
                 </tr>
                 <tr>
                     <td>Asal Barang</td>
-                    <td>: {{ $sourceName }} ({{ $sourceLabel }})</td>
+                    <td>:</td>
+                    <td>{{ $sourceName }} ({{ $sourceLabel }})</td>
                 </tr>
                 @if($sourceContact)
                     <tr>
                         <td>Kontak</td>
-                        <td>: {{ $sourceContact }}</td>
+                        <td>:</td>
+                        <td>{{ $sourceContact }}</td>
                     </tr>
                 @endif
                 <tr>
                     <td>Telepon</td>
-                    <td>: {{ $sourcePhone ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $sourcePhone ?: '-' }}</td>
                 </tr>
                 <tr>
                     <td>Alamat</td>
-                    <td>: {{ $sourceAddress ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $sourceAddress ?: '-' }}</td>
                 </tr>
             </table>
 
             <table>
                 <tr>
                     <td>Jenis Angkutan</td>
-                    <td>: {{ $purchase->transport_type ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->transport_type ?: '-' }}</td>
                 </tr>
                 <tr>
                     <td>No Pol Kendaraan</td>
-                    <td>: {{ $purchase->vehicle_plate_number ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->vehicle_plate_number ?: '-' }}</td>
                 </tr>
                 <tr>
                     <td>Dibuat Oleh</td>
-                    <td>: {{ $purchase->creator?->name ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->creator?->name ?: '-' }}</td>
                 </tr>
                 <tr>
                     <td>Catatan</td>
-                    <td>: {{ $purchase->notes ?: '-' }}</td>
+                    <td>:</td>
+                    <td>{{ $purchase->notes ?: '-' }}</td>
                 </tr>
             </table>
         </div>
@@ -253,11 +281,6 @@
                 <div class="signature-line">{{ $purchase->creator?->name ?: 'Petugas' }}</div>
             </div>
             <div class="signature-box">
-                <div>Cap Perusahaan,</div>
-                <div class="stamp-box">CAP<br>PERUSAHAAN</div>
-                <div class="signature-line">{{ config('app.name') }}</div>
-            </div>
-            <div class="signature-box">
                 <div>Penerima,</div>
                 <div class="signature-line">{{ $sourceName }}</div>
             </div>
@@ -271,11 +294,15 @@
                 <p class="text-muted mb-0">{{ $purchase->number }}</p>
             </div>
             <div class="d-flex gap-2 print-hidden">
-                <a href="{{ route('purchases.index') }}" class="btn btn-label-secondary">Kembali</a>
-                <button type="button" class="btn btn-label-primary" onclick="window.print()">
-                    <i class="bx bx-printer me-1"></i> Print
+                <a href="{{ route('purchases.index') }}" class="btn btn-label-secondary">
+                    <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+                </a>
+                <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="icon-base bx bx-printer me-1"></i> Print
                 </button>
-                <a href="{{ route('purchases.create') }}" class="btn btn-primary">Tambah</a>
+                <a href="{{ route('purchases.create') }}" class="btn btn-primary">
+                    <i class="icon-base bx bx-plus me-1"></i> Tambah
+                </a>
             </div>
         </div>
 
@@ -287,7 +314,11 @@
         @endif
 
         <div class="card mb-4">
-            <div class="card-body">
+            <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+                <h5 class="mb-0">Informasi Pembelian</h5>
+                <span class="badge bg-label-primary">{{ $sourceLabel }}</span>
+            </div>
+            <div class="card-body pt-4">
                 <dl class="row mb-0">
                     <dt class="col-sm-3">Nomor</dt>
                     <dd class="col-sm-9">{{ $purchase->number }}</dd>
@@ -320,21 +351,26 @@
         </div>
 
         <div class="card">
+            <div class="card-header border-bottom">
+                <h5 class="mb-0">Rincian Barang</h5>
+            </div>
             <div class="table-responsive text-nowrap">
-                <table class="table table-hover">
+                <table class="table table-hover align-middle">
                     <thead>
                         <tr>
+                            <th style="width: 48px;" class="text-center">No</th>
                             <th>Barang</th>
                             <th>Gudang Tujuan</th>
-                            <th>Jumlah</th>
-                            <th>Harga Satuan</th>
-                            <th>Subtotal</th>
+                            <th class="text-end">Jumlah</th>
+                            <th class="text-end">Harga Satuan</th>
+                            <th class="text-end">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($purchase->items as $detail)
                             <tr>
-                                <td>
+                                <td class="text-center text-muted">{{ $loop->iteration }}</td>
+                                <td class="text-wrap" style="min-width: 240px;">
                                     @php
                                         $categoryLabel = $itemCategories[$detail->item->category] ?? ucfirst(str_replace('_', ' ', $detail->item->category));
                                         $stateLabel = $itemMaterialStates[$detail->item->material_state ?? 'none'] ?? ucfirst(str_replace('_', ' ', $detail->item->material_state ?? 'none'));
@@ -345,12 +381,18 @@
                                     <div class="text-muted small">{{ $itemLabel }}</div>
                                 </td>
                                 <td>{{ $detail->warehouse->name }}</td>
-                                <td>{{ number_format((float) $detail->quantity, 2, ',', '.') }} {{ strtoupper($detail->item->unit) }}</td>
-                                <td>Rp {{ number_format((float) $detail->unit_price, 2, ',', '.') }}</td>
-                                <td>Rp {{ number_format((float) $detail->subtotal, 2, ',', '.') }}</td>
+                                <td class="text-end">{{ number_format((float) $detail->quantity, 2, ',', '.') }} {{ strtoupper($detail->item->unit) }}</td>
+                                <td class="text-end">Rp {{ number_format((float) $detail->unit_price, 2, ',', '.') }}</td>
+                                <td class="text-end fw-medium">Rp {{ number_format((float) $detail->subtotal, 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot class="table-border-bottom-0">
+                        <tr>
+                            <th colspan="5" class="text-end">Total Pembelian</th>
+                            <th class="text-end fw-bold">Rp {{ number_format((float) $purchase->total_amount, 2, ',', '.') }}</th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
