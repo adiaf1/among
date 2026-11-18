@@ -76,6 +76,7 @@ class PurchaseController extends Controller
     public function create(): View
     {
         return view('purchases.create', [
+            'nextNumber' => $this->generateNumber(),
             'suppliers' => Supplier::where('is_active', true)->orderBy('name')->get(),
             'farmers' => Farmer::where('is_active', true)->orderBy('name')->get(),
             'transportTypes' => $this->distinctPurchaseValues('transport_type'),

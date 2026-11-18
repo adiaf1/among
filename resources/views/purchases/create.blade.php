@@ -64,10 +64,11 @@
                             class="form-control @error('number') is-invalid @enderror"
                             id="number"
                             name="number"
-                            value="{{ old('number') }}"
+                            value="{{ old('number', $nextNumber) }}"
                             maxlength="100"
                             placeholder="Kosongkan untuk otomatis"
                         >
+                        <div class="form-text">Nomor dibuat otomatis (format <code>PO-YYYYMMDD-XXXX</code>), dapat diubah atau dikosongkan.</div>
                         @error('number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
