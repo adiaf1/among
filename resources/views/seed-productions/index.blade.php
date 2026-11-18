@@ -84,11 +84,13 @@
                             </td>
                             <td>{{ $seedProduction->outputWarehouse?->name ?? '-' }}</td>
                             <td>
-                                @php($badge = match($seedProduction->status) {
-                                    'siap_salur' => 'success',
-                                    'batal' => 'danger',
-                                    default => 'primary',
-                                })
+                                @php
+                                    $badge = match($seedProduction->status) {
+                                        'siap_salur' => 'success',
+                                        'batal' => 'danger',
+                                        default => 'primary',
+                                    };
+                                @endphp
                                 <span class="badge bg-label-{{ $badge }}">{{ $statuses[$seedProduction->status] ?? $seedProduction->status }}</span>
                             </td>
                             <td class="text-end">

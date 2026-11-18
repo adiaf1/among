@@ -73,6 +73,7 @@ class SeedProductionController extends Controller
     public function create(): View
     {
         return view('seed-productions.create', [
+            'nextNumber' => $this->generateNumber(),
             'riceVarieties' => RiceVariety::where('is_active', true)->orderBy('name')->get(),
             'seedClasses' => SeedClass::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),

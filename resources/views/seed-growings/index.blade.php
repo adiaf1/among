@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Daftar no lapangan penangkaran, varietas, jadwal pemeriksaan, dan panen.</p>
         </div>
         <a href="{{ route('seed-growings.create') }}" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> Tambah
+            <i class="icon-base bx bx-plus me-1"></i> Tambah
         </a>
     </div>
 
@@ -22,6 +22,7 @@
     <div class="card">
         <div class="card-header border-bottom">
             <form method="GET" action="{{ route('seed-growings.index') }}" class="row g-3 align-items-center">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <div class="col-md-5 col-lg-4">
                     <label for="search" class="form-label mb-1">Pencarian</label>
                     <input
@@ -35,19 +36,18 @@
                 </div>
                 <div class="col-md-3 col-lg-2">
                     <label for="status" class="form-label mb-1">Status</label>
-                    <select id="status" name="status" class="form-select">
+                    <select id="status" name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">Semua Status</option>
                         @foreach($statuses as $value => $label)
                             <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-auto d-flex gap-2 align-self-end">
-                    <button type="submit" class="btn btn-label-primary">Filter</button>
-                    @if($search || $status)
-                        <a href="{{ route('seed-growings.index') }}" class="btn btn-label-secondary">Reset</a>
-                    @endif
-                </div>
+                @if($search || $status)
+                    <div class="col-md-auto align-self-end">
+                        <a href="{{ route('seed-growings.index', ['per_page' => $perPage]) }}" class="btn btn-label-secondary">Reset</a>
+                    </div>
+                @endif
             </form>
         </div>
 
@@ -65,7 +65,7 @@
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
                     @forelse($seedGrowings as $seedGrowing)
                         <tr>
                             <td><span class="fw-medium">{{ $seedGrowing->number }}</span></td>
@@ -87,18 +87,20 @@
                                 <div class="text-muted small">Panen: {{ $seedGrowing->harvest_date?->format('d M Y') ?? '-' }}</div>
                             </td>
                             <td>
-                                @php($badge = match($seedGrowing->status) {
-                                    'berjalan' => 'primary',
-                                    'panen' => 'info',
-                                    'selesai' => 'success',
-                                    'batal' => 'danger',
-                                    default => 'secondary',
-                                })
+                                @php
+                                    $badge = match($seedGrowing->status) {
+                                        'berjalan' => 'primary',
+                                        'panen' => 'info',
+                                        'selesai' => 'success',
+                                        'batal' => 'danger',
+                                        default => 'secondary',
+                                    };
+                                @endphp
                                 <span class="badge bg-label-{{ $badge }}">{{ $statuses[$seedGrowing->status] ?? $seedGrowing->status }}</span>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('seed-growings.show', $seedGrowing) }}" class="btn btn-sm btn-label-primary">
-                                    <i class="bx bx-show me-1"></i> Detail
+                                <a href="{{ route('seed-growings.show', $seedGrowing) }}" class="btn btn-sm btn-outline-primary">
+                                    <span class="icon-base bx bx-show icon-sm me-1"></span>Detail
                                 </a>
                             </td>
                         </tr>
@@ -111,8 +113,29 @@
             </table>
         </div>
 
-        <div class="card-footer">
-            {{ $seedGrowings->links('pagination::bootstrap-4') }}
+        <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <form method="GET" action="{{ route('seed-growings.index') }}" class="d-flex align-items-center gap-2">
+                    @if($search)
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
+                    @if($status)
+                        <input type="hidden" name="status" value="{{ $status }}">
+                    @endif
+                    <label for="per_page" class="text-muted small mb-0">Tampilkan</label>
+                    <select id="per_page" name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <span class="text-muted small">
+                    Menampilkan {{ $seedGrowings->firstItem() ?? 0 }} - {{ $seedGrowings->lastItem() ?? 0 }} dari {{ $seedGrowings->total() }} data
+                </span>
+            </div>
+            <div>
+                {{ $seedGrowings->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 </div>

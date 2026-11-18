@@ -2,17 +2,45 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
+    @php
+        $badge = match($seedProduction->status) {
+            'siap_salur' => 'success',
+            'batal' => 'danger',
+            default => 'primary',
+        };
+        $mainInputs = $seedProduction->inputs->where('role', 'bahan_utama');
+        $supportInputs = $seedProduction->inputs->where('role', '!=', 'bahan_utama');
+        $mainInputsQty = (float) $mainInputs->sum('quantity');
+        $totalSteps = $seedProduction->steps->count();
+        $completedSteps = $seedProduction->steps->where('status', 'selesai')->count();
+        $stepProgress = $totalSteps > 0 ? (int) round(($completedSteps / $totalSteps) * 100) : 0;
+        $totalStepCost = (float) $seedProduction->steps->sum('cost');
+        $isAddInputOld = old('_form_type') === 'add_input';
+        $isAddStepOld = old('_form_type') === 'add_step';
+    @endphp
+
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
         <div>
-            <h4 class="mb-1">Detail Produksi Benih</h4>
-            <p class="text-muted mb-0">{{ $seedProduction->number }}</p>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <h4 class="mb-0">Detail Produksi Benih</h4>
+                <span class="badge bg-label-{{ $badge }}">{{ $statuses[$seedProduction->status] ?? $seedProduction->status }}</span>
+                @if($seedProduction->lot_number)
+                    <span class="badge bg-label-info">Lot {{ $seedProduction->lot_number }}</span>
+                @endif
+            </div>
+            <p class="text-muted mb-0">
+                {{ $seedProduction->number }} • {{ $seedProduction->riceVariety?->name ?? 'Semua Varietas' }}
+                @if($seedProduction->seedClass)
+                    ({{ $seedProduction->seedClass->name }})
+                @endif
+            </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('seed-productions.index') }}" class="btn btn-label-secondary">
-                <i class="bx bx-arrow-back me-1"></i> Kembali
+                <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
             </a>
             <a href="{{ route('seed-productions.create') }}" class="btn btn-primary">
-                <i class="bx bx-plus me-1"></i> Tambah
+                <i class="icon-base bx bx-plus me-1"></i> Tambah
             </a>
         </div>
     </div>
@@ -26,62 +54,155 @@
 
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ $errors->first() }}
+            <div class="fw-medium mb-1">Periksa kembali isian berikut:</div>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-heading">Bahan Utama Dipakai</span>
+                            <h4 class="my-1">{{ number_format($mainInputsQty, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}</h4>
+                            <small class="text-muted">{{ $mainInputs->count() }} bahan utama • {{ $supportInputs->count() }} pendukung</small>
+                        </div>
+                        <div class="avatar">
+                            <span class="avatar-initial rounded bg-label-primary">
+                                <i class="icon-base bx bx-package icon-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-heading">Target Hasil</span>
+                            <h4 class="my-1">
+                                @if($seedProduction->target_quantity)
+                                    {{ number_format((float) $seedProduction->target_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}
+                                @else
+                                    -
+                                @endif
+                            </h4>
+                            <small class="text-muted">Gudang: {{ $seedProduction->outputWarehouse?->name ?? '-' }}</small>
+                        </div>
+                        <div class="avatar">
+                            <span class="avatar-initial rounded bg-label-warning">
+                                <i class="icon-base bx bx-bullseye icon-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div class="w-100 me-3">
+                            <span class="text-heading">Progres Tahapan</span>
+                            <div class="d-flex align-items-center justify-content-between my-1">
+                                <h4 class="mb-0">{{ $completedSteps }} / {{ $totalSteps }}</h4>
+                                <small class="text-muted">{{ $stepProgress }}%</small>
+                            </div>
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $stepProgress }}%" aria-valuenow="{{ $stepProgress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">Tahap selesai dikerjakan</small>
+                        </div>
+                        <div class="avatar">
+                            <span class="avatar-initial rounded bg-label-info">
+                                <i class="icon-base bx bx-list-check icon-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-heading">Total Biaya Tahap</span>
+                            <h4 class="my-1">Rp {{ number_format($totalStepCost, 0, ',', '.') }}</h4>
+                            <small class="text-muted">Akumulasi {{ $totalSteps }} tahapan produksi</small>
+                        </div>
+                        <div class="avatar">
+                            <span class="avatar-initial rounded bg-label-success">
+                                <i class="icon-base bx bx-wallet icon-lg"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="card h-100">
-                <div class="card-header border-bottom">
+                <div class="card-header d-flex justify-content-between align-items-center border-bottom">
                     <h5 class="mb-0">Informasi Produksi</h5>
+                    <span class="badge bg-label-{{ $badge }}">{{ $statuses[$seedProduction->status] ?? $seedProduction->status }}</span>
                 </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4">Nomor</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->number }}</dd>
-
-                        <dt class="col-sm-4">Tanggal Produksi</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->production_date?->format('d M Y') }}</dd>
-
-                        <dt class="col-sm-4">No Lot</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->lot_number ?: '-' }}</dd>
-
-                        <dt class="col-sm-4">Varietas</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->riceVariety?->name ?? '-' }}</dd>
-
-                        <dt class="col-sm-4">Kelas Benih Tujuan</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->seedClass?->name ?? '-' }}</dd>
-
-                        <dt class="col-sm-4">Gudang Hasil</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->outputWarehouse?->name ?? '-' }}</dd>
-
-                        <dt class="col-sm-4">Target Hasil</dt>
-                        <dd class="col-sm-8">
-                            @if($seedProduction->target_quantity)
-                                {{ number_format((float) $seedProduction->target_quantity, 2, ',', '.') }} {{ $seedProduction->unit }}
-                            @else
-                                -
-                            @endif
-                        </dd>
-
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8">
-                            @php($badge = match($seedProduction->status) {
-                                'siap_salur' => 'success',
-                                'batal' => 'danger',
-                                default => 'primary',
-                            })
-                            <span class="badge bg-label-{{ $badge }}">{{ $statuses[$seedProduction->status] ?? $seedProduction->status }}</span>
-                        </dd>
-
-                        <dt class="col-sm-4">Dibuat Oleh</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->creator?->name ?? '-' }}</dd>
-
-                        <dt class="col-sm-4">Catatan</dt>
-                        <dd class="col-sm-8">{{ $seedProduction->notes ?: '-' }}</dd>
-                    </dl>
+                <div class="card-body pt-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Nomor Dokumen</small>
+                            <span class="fw-medium">{{ $seedProduction->number }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Tanggal Produksi</small>
+                            <span class="fw-medium">{{ $seedProduction->production_date?->format('d M Y') ?? '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">No Lot</small>
+                            <span class="fw-medium">{{ $seedProduction->lot_number ?: '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Gudang Hasil</small>
+                            <span class="fw-medium">{{ $seedProduction->outputWarehouse?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Varietas Padi</small>
+                            <span class="fw-medium">{{ $seedProduction->riceVariety?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Kelas Benih Tujuan</small>
+                            <span class="fw-medium">{{ $seedProduction->seedClass?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Target Hasil</small>
+                            <span class="fw-medium">
+                                @if($seedProduction->target_quantity)
+                                    {{ number_format((float) $seedProduction->target_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}
+                                @else
+                                    -
+                                @endif
+                            </span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Dibuat Oleh</small>
+                            <span class="fw-medium">{{ $seedProduction->creator?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Catatan</small>
+                            <span>{{ $seedProduction->notes ?: '-' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,22 +210,67 @@
         <div class="col-lg-5">
             <div class="card h-100">
                 <div class="card-header border-bottom">
-                    <h5 class="mb-0">Ringkasan Bahan</h5>
+                    <h5 class="mb-0">Ringkasan Bahan & Biaya</h5>
                 </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5">Total Baris Bahan</dt>
-                        <dd class="col-sm-7">{{ $seedProduction->inputs->count() }}</dd>
-
-                        <dt class="col-sm-5">Bahan Utama</dt>
-                        <dd class="col-sm-7">{{ $seedProduction->inputs->where('role', 'bahan_utama')->count() }} baris</dd>
-
-                        <dt class="col-sm-5">Pendukung</dt>
-                        <dd class="col-sm-7">{{ $seedProduction->inputs->where('role', 'pendukung')->count() }} baris</dd>
-
-                        <dt class="col-sm-5">Total Biaya Tahap</dt>
-                        <dd class="col-sm-7">Rp {{ number_format((float) $seedProduction->steps->sum('cost'), 2, ',', '.') }}</dd>
-                    </dl>
+                <div class="card-body pt-4">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-primary">
+                                    <i class="icon-base bx bx-leaf"></i>
+                                </span>
+                            </div>
+                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                <div>
+                                    <h6 class="mb-0">Bahan Utama</h6>
+                                    <small class="text-muted">{{ $mainInputs->count() }} baris bahan</small>
+                                </div>
+                                <span class="fw-medium">{{ number_format($mainInputsQty, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-secondary">
+                                    <i class="icon-base bx bx-box"></i>
+                                </span>
+                            </div>
+                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                <div>
+                                    <h6 class="mb-0">Bahan Pendukung / Kemasan</h6>
+                                    <small class="text-muted">Karung, plastik, benang, dll.</small>
+                                </div>
+                                <span class="fw-medium">{{ $supportInputs->count() }} baris</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-info">
+                                    <i class="icon-base bx bx-layer"></i>
+                                </span>
+                            </div>
+                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                <div>
+                                    <h6 class="mb-0">Total Baris Bahan</h6>
+                                    <small class="text-muted">Seluruh input produksi</small>
+                                </div>
+                                <span class="fw-medium">{{ $seedProduction->inputs->count() }} baris</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-success">
+                                    <i class="icon-base bx bx-money"></i>
+                                </span>
+                            </div>
+                            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                <div>
+                                    <h6 class="mb-0">Total Biaya Tahapan</h6>
+                                    <small class="text-muted">{{ $completedSteps }} dari {{ $totalSteps }} tahap selesai</small>
+                                </div>
+                                <span class="fw-medium">Rp {{ number_format($totalStepCost, 2, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,16 +278,23 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header border-bottom d-flex flex-column gap-3">
-                    <h5 class="mb-0">Bahan Produksi</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Bahan Produksi</h5>
+                            <small class="text-muted">Daftar bahan baku dan bahan pendukung yang diambil dari stok gudang.</small>
+                        </div>
+                        <span class="badge bg-label-primary">{{ $seedProduction->inputs->count() }} Baris</span>
+                    </div>
                     @if($seedProduction->status === 'proses')
-                        <form method="POST" action="{{ route('seed-productions.inputs.store', $seedProduction) }}" class="row g-2 align-items-end">
+                        <form method="POST" action="{{ route('seed-productions.inputs.store', $seedProduction) }}" class="row g-2 align-items-end pt-2 border-top">
                             @csrf
+                            <input type="hidden" name="_form_type" value="add_input">
                             <div class="col-6 col-md-2">
                                 <label class="form-label small mb-1">Tanggal</label>
                                 <input
                                     type="date"
                                     name="movement_date"
-                                    value="{{ old('movement_date', now()->toDateString()) }}"
+                                    value="{{ $isAddInputOld ? old('movement_date', now()->toDateString()) : now()->toDateString() }}"
                                     class="form-control form-control-sm @error('movement_date') is-invalid @enderror"
                                     required
                                 >
@@ -138,7 +311,7 @@
                                     required
                                 >
                                     @foreach($inputRoles as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('role', 'pendukung') === $value)>{{ $label }}</option>
+                                        <option value="{{ $value }}" @selected(($isAddInputOld ? old('role', 'pendukung') : 'pendukung') === $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
                                 @error('role')
@@ -151,7 +324,7 @@
                                     name="stock_id"
                                     id="additional-production-input-stock"
                                     class="form-select form-select-sm @error('stock_id') is-invalid @enderror"
-                                    data-selected="{{ old('stock_id') }}"
+                                    data-selected="{{ $isAddInputOld ? old('stock_id') : '' }}"
                                     required
                                 >
                                     <option value="">Pilih stok bahan</option>
@@ -165,7 +338,7 @@
                                 <input
                                     type="number"
                                     name="quantity"
-                                    value="{{ old('quantity') }}"
+                                    value="{{ $isAddInputOld ? old('quantity') : '' }}"
                                     min="0.01"
                                     max="9999999999.99"
                                     step="0.01"
@@ -182,7 +355,7 @@
                                 <input
                                     type="text"
                                     name="notes"
-                                    value="{{ old('notes') }}"
+                                    value="{{ $isAddInputOld ? old('notes') : '' }}"
                                     class="form-control form-control-sm @error('notes') is-invalid @enderror"
                                     placeholder="-"
                                 >
@@ -191,17 +364,18 @@
                                 @enderror
                             </div>
                             <div class="col-12 col-md-1 d-grid">
-                                <button type="submit" class="btn btn-sm btn-primary">
-                                    <i class="bx bx-plus"></i>
+                                <button type="submit" class="btn btn-sm btn-primary" title="Tambah Bahan">
+                                    <i class="icon-base bx bx-plus"></i>
                                 </button>
                             </div>
                         </form>
                     @endif
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle">
+                    <table class="table table-hover align-middle">
                         <thead>
                             <tr>
+                                <th style="width: 48px;" class="text-center">No</th>
                                 <th>Barang</th>
                                 <th>Gudang</th>
                                 <th>Peran</th>
@@ -209,16 +383,21 @@
                                 <th>Catatan</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="table-border-bottom-0">
                             @foreach($seedProduction->inputs as $input)
                                 <tr>
+                                    <td class="text-center text-muted">{{ $loop->iteration }}</td>
                                     <td>
                                         <span class="fw-medium">{{ $input->item?->name ?? '-' }}</span>
                                         <div class="text-muted small">{{ $input->item?->code ?? '-' }}</div>
                                     </td>
                                     <td>{{ $input->warehouse?->name ?? '-' }}</td>
-                                    <td>{{ $inputRoles[$input->role] ?? $input->role }}</td>
-                                    <td class="text-end">{{ number_format((float) $input->quantity, 2, ',', '.') }} {{ $input->unit }}</td>
+                                    <td>
+                                        <span class="badge {{ $input->role === 'bahan_utama' ? 'bg-label-primary' : 'bg-label-secondary' }}">
+                                            {{ $inputRoles[$input->role] ?? $input->role }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-medium">{{ number_format((float) $input->quantity, 2, ',', '.') }} {{ strtoupper($input->unit) }}</td>
                                     <td>{{ $input->notes ?: '-' }}</td>
                                 </tr>
                             @endforeach
@@ -231,15 +410,19 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header border-bottom d-flex flex-column flex-lg-row justify-content-between gap-3">
-                    <h5 class="mb-0">Tahapan Produksi</h5>
+                    <div>
+                        <h5 class="mb-0">Tahapan Produksi</h5>
+                        <small class="text-muted">Kelola urutan tahapan pengolahan, realisasi berat (kg), dan biaya per tahap.</small>
+                    </div>
                     <form method="POST" action="{{ route('seed-productions.steps.store', $seedProduction) }}" class="row g-2 align-items-end">
                         @csrf
+                        <input type="hidden" name="_form_type" value="add_step">
                         <div class="col-12 col-md-3">
                             <label class="form-label small mb-1">Tahap</label>
                             <input
                                 type="text"
                                 name="label"
-                                value="{{ old('label') }}"
+                                value="{{ $isAddStepOld ? old('label') : '' }}"
                                 class="form-control form-control-sm"
                                 list="production-step-label-options"
                                 placeholder="Nama tahap"
@@ -251,7 +434,7 @@
                             <input
                                 type="date"
                                 name="planned_date"
-                                value="{{ old('planned_date') }}"
+                                value="{{ $isAddStepOld ? old('planned_date') : '' }}"
                                 class="form-control form-control-sm"
                             >
                         </div>
@@ -259,7 +442,7 @@
                             <label class="form-label small mb-1">Posisi</label>
                             <select name="position" class="form-select form-select-sm">
                                 @foreach($stepPositions as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('position', 'end') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" @selected(($isAddStepOld ? old('position', 'end') : 'end') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -268,7 +451,7 @@
                             <select name="reference_step_id" class="form-select form-select-sm">
                                 <option value="">-</option>
                                 @foreach($seedProduction->steps as $stepOption)
-                                    <option value="{{ $stepOption->id }}" @selected(old('reference_step_id') === $stepOption->id)>
+                                    <option value="{{ $stepOption->id }}" @selected(($isAddStepOld ? old('reference_step_id') : '') === $stepOption->id)>
                                         {{ $stepOption->sort_order }}. {{ $stepOption->label }}
                                     </option>
                                 @endforeach
@@ -278,13 +461,13 @@
                             <label class="form-label small mb-1">Biaya</label>
                             <select name="cost_type" class="form-select form-select-sm">
                                 @foreach($stepCostTypes as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('cost_type', 'per_kg') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" @selected(($isAddStepOld ? old('cost_type', 'per_kg') : 'per_kg') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-12 col-md-1 d-grid">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bx bx-plus"></i>
+                            <button type="submit" class="btn btn-sm btn-primary" title="Tambah Tahap">
+                                <i class="icon-base bx bx-plus"></i>
                             </button>
                         </div>
                     </form>
@@ -295,32 +478,39 @@
                     @endforeach
                 </datalist>
                 <div class="table-responsive">
-                    <table class="table align-middle">
+                    <table class="table table-hover align-middle">
                         <thead>
                             <tr>
                                 <th style="width: 72px;">Urut</th>
                                 <th style="min-width: 180px;">Tahap</th>
-                                <th style="min-width: 190px;">Tanggal</th>
+                                <th style="min-width: 170px;">Tanggal</th>
                                 <th style="min-width: 140px;">Jenis Biaya</th>
                                 <th style="min-width: 140px;">Jumlah Kg</th>
                                 <th style="min-width: 160px;">Biaya / Kg</th>
                                 <th style="min-width: 170px;">Total Biaya</th>
                                 <th style="min-width: 140px;">Status</th>
-                                <th style="min-width: 220px;">Catatan</th>
+                                <th style="min-width: 200px;">Catatan</th>
                                 <th class="text-end">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($seedProduction->steps as $step)
-                                @php($formId = 'production-step-form-'.$step->id)
-                                @php($costType = old('cost_type', $step->cost_type ?? 'per_kg'))
+                                @php
+                                    $formId = 'production-step-form-'.$step->id;
+                                    $isOldStep = old('step_id') === $step->id;
+                                    $costType = $isOldStep ? old('cost_type', $step->cost_type ?? 'per_kg') : ($step->cost_type ?? 'per_kg');
+                                @endphp
                                 <tr>
-                                    <td>{{ $step->sort_order }}</td>
+                                    <td>
+                                        <span class="badge badge-center rounded-pill {{ $step->status === 'selesai' ? 'bg-label-success' : 'bg-label-secondary' }}">
+                                            {{ $step->sort_order }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <input
                                             type="text"
                                             name="label"
-                                            value="{{ old('label', $step->label) }}"
+                                            value="{{ $isOldStep ? old('label') : $step->label }}"
                                             class="form-control form-control-sm fw-medium"
                                             form="{{ $formId }}"
                                             list="production-step-label-options"
@@ -331,7 +521,7 @@
                                         <input
                                             type="date"
                                             name="planned_date"
-                                            value="{{ old('planned_date', $step->actual_date?->toDateString() ?? $step->planned_date?->toDateString()) }}"
+                                            value="{{ $isOldStep ? old('planned_date') : ($step->actual_date?->toDateString() ?? $step->planned_date?->toDateString()) }}"
                                             class="form-control form-control-sm"
                                             form="{{ $formId }}"
                                         >
@@ -351,7 +541,7 @@
                                         <input
                                             type="number"
                                             name="quantity"
-                                            value="{{ old('quantity', $step->quantity) }}"
+                                            value="{{ $isOldStep ? old('quantity') : $step->quantity }}"
                                             min="0.01"
                                             max="9999999999.99"
                                             step="0.01"
@@ -367,7 +557,7 @@
                                                 type="text"
                                                 inputmode="numeric"
                                                 name="cost_per_kg"
-                                                value="{{ old('cost_per_kg', $step->cost_per_kg !== null ? number_format((float) $step->cost_per_kg, 0, ',', '.') : '') }}"
+                                                value="{{ $isOldStep ? old('cost_per_kg') : ($step->cost_per_kg !== null ? number_format((float) $step->cost_per_kg, 0, ',', '.') : '') }}"
                                                 class="form-control rupiah-input production-step-cost-per-kg"
                                                 form="{{ $formId }}"
                                                 placeholder="0"
@@ -382,7 +572,7 @@
                                                 type="text"
                                                 inputmode="numeric"
                                                 name="cost"
-                                                value="{{ old('cost', number_format((float) $step->cost, 0, ',', '.')) }}"
+                                                value="{{ $isOldStep ? old('cost') : number_format((float) $step->cost, 0, ',', '.') }}"
                                                 class="form-control rupiah-input production-step-cost"
                                                 form="{{ $formId }}"
                                                 placeholder="0"
@@ -393,7 +583,7 @@
                                     <td>
                                         <select name="status" class="form-select form-select-sm" form="{{ $formId }}">
                                             @foreach($stepStatuses as $value => $label)
-                                                <option value="{{ $value }}" @selected(old('status', $step->status) === $value)>{{ $label }}</option>
+                                                <option value="{{ $value }}" @selected(($isOldStep ? old('status') : $step->status) === $value)>{{ $label }}</option>
                                             @endforeach
                                         </select>
                                     </td>
@@ -401,7 +591,7 @@
                                         <input
                                             type="text"
                                             name="notes"
-                                            value="{{ old('notes', $step->notes) }}"
+                                            value="{{ $isOldStep ? old('notes') : $step->notes }}"
                                             class="form-control form-control-sm"
                                             form="{{ $formId }}"
                                             placeholder="Catatan"
@@ -411,14 +601,21 @@
                                         <form id="{{ $formId }}" method="POST" action="{{ route('seed-productions.steps.update', [$seedProduction, $step]) }}">
                                             @csrf
                                             @method('PATCH')
+                                            <input type="hidden" name="step_id" value="{{ $step->id }}">
                                         </form>
-                                        <button type="submit" class="btn btn-sm btn-label-primary" form="{{ $formId }}">
-                                            <i class="bx bx-save me-1"></i> Simpan
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" form="{{ $formId }}">
+                                            <span class="icon-base bx bx-save icon-sm me-1"></span>Simpan
                                         </button>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
+                        <tfoot class="table-border-bottom-0">
+                            <tr>
+                                <th colspan="6" class="text-end">Total Biaya Tahapan</th>
+                                <th colspan="4" class="fw-bold">Rp {{ number_format($totalStepCost, 2, ',', '.') }}</th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

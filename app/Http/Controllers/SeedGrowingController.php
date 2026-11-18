@@ -59,6 +59,9 @@ class SeedGrowingController extends Controller
     {
         $search = $request->string('search')->toString();
         $status = $request->string('status')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $seedGrowings = SeedGrowing::query()
             ->with(['farmer', 'land', 'riceVariety', 'seedClass'])
@@ -74,13 +77,14 @@ class SeedGrowingController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('seed-growings.index', [
             'seedGrowings' => $seedGrowings,
             'search' => $search,
             'status' => $status,
+            'perPage' => $perPage,
             'statuses' => self::STATUSES,
         ]);
     }
@@ -106,6 +110,7 @@ class SeedGrowingController extends Controller
             ->toArray();
 
         return view('seed-growings.create', [
+            'nextNumber' => $this->generateNumber(),
             'farmers' => Farmer::where('is_active', true)->orderBy('name')->get(),
             'lands' => Land::with('farmer')->where('is_active', true)->orderBy('name')->get(),
             'riceVarieties' => RiceVariety::where('is_active', true)->orderBy('name')->get(),

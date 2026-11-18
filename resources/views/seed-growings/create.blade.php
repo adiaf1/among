@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Satu data mewakili satu no lapangan, satu varietas, dan maksimal 5 hektar.</p>
         </div>
         <a href="{{ route('seed-growings.index') }}" class="btn btn-label-secondary">
-            <i class="bx bx-arrow-back me-1"></i> Kembali
+            <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
         </a>
     </div>
 
@@ -25,11 +25,17 @@
 
     <form method="POST" action="{{ route('seed-growings.store') }}" class="card">
         @csrf
-        <div class="card-body">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0">Form Penangkaran Benih</h5>
+            <small class="text-body-secondary float-end">Penangkaran</small>
+        </div>
+        <div class="card-body pt-4">
             <div class="row g-4">
                 <div class="col-md-6">
                     <label for="number" class="form-label">Nomor Dokumen</label>
-                    <input type="text" id="number" name="number" value="{{ old('number') }}" class="form-control" placeholder="Auto generate jika kosong">
+                    <input type="text" id="number" name="number" value="{{ old('number', $nextNumber) }}" class="form-control @error('number') is-invalid @enderror" placeholder="Auto generate jika kosong">
+                    <div class="form-text">Otomatis (<code>PKR-YYYYMMDD-XXXX</code>), dapat diubah atau dikosongkan.</div>
+                    @error('number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Status Awal</label>
@@ -38,17 +44,18 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label for="farmer_id" class="form-label">Petani</label>
-                    <select id="farmer_id" name="farmer_id" class="form-select" required>
+                    <label for="farmer_id" class="form-label">Petani <span class="text-danger">*</span></label>
+                    <select id="farmer_id" name="farmer_id" class="form-select @error('farmer_id') is-invalid @enderror" required>
                         <option value="">Pilih petani</option>
                         @foreach($farmers as $farmer)
                             <option value="{{ $farmer->id }}" @selected(old('farmer_id') === $farmer->id)>{{ $farmer->code }} - {{ $farmer->name }}</option>
                         @endforeach
                     </select>
+                    @error('farmer_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
-                    <label for="land_id" class="form-label">Lahan</label>
-                    <select id="land_id" name="land_id" class="form-select" required>
+                    <label for="land_id" class="form-label">Lahan <span class="text-danger">*</span></label>
+                    <select id="land_id" name="land_id" class="form-select @error('land_id') is-invalid @enderror" required>
                         <option value="">Pilih lahan</option>
                         @foreach($lands as $land)
                             <option
@@ -62,47 +69,53 @@
                         @endforeach
                     </select>
                     <div class="form-text">Lahan akan mengikuti petani yang dipilih.</div>
+                    @error('land_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="col-md-4">
-                    <label for="field_number" class="form-label">No Lapangan</label>
-                    <input type="text" id="field_number" name="field_number" value="{{ old('field_number') }}" class="form-control" placeholder="Contoh: LP-001A" required>
+                    <label for="field_number" class="form-label">No Lapangan <span class="text-danger">*</span></label>
+                    <input type="text" id="field_number" name="field_number" value="{{ old('field_number') }}" class="form-control @error('field_number') is-invalid @enderror" placeholder="Contoh: LP-001A" required>
+                    @error('field_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
                     <label for="lot_number" class="form-label">No Lot</label>
-                    <input type="text" id="lot_number" name="lot_number" value="{{ old('lot_number') }}" class="form-control" placeholder="Boleh diisi saat panen">
+                    <input type="text" id="lot_number" name="lot_number" value="{{ old('lot_number') }}" class="form-control @error('lot_number') is-invalid @enderror" placeholder="Boleh diisi saat panen">
+                    @error('lot_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="field_area" class="form-label">Luas No Lapangan</label>
+                    <label for="field_area" class="form-label">Luas No Lapangan <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <input type="number" step="0.01" min="0.01" max="5" id="field_area" name="field_area" value="{{ old('field_area') }}" class="form-control" required>
+                        <input type="number" step="0.01" min="0.01" max="5" id="field_area" name="field_area" value="{{ old('field_area') }}" class="form-control @error('field_area') is-invalid @enderror" required>
                         <span class="input-group-text">ha</span>
+                        @error('field_area') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="form-text" id="field_area_help">Maksimal 5 ha per no lapangan.</div>
                 </div>
 
                 <div class="col-md-6">
-                    <label for="rice_variety_id" class="form-label">Varietas</label>
-                    <select id="rice_variety_id" name="rice_variety_id" class="form-select" required>
+                    <label for="rice_variety_id" class="form-label">Varietas <span class="text-danger">*</span></label>
+                    <select id="rice_variety_id" name="rice_variety_id" class="form-select @error('rice_variety_id') is-invalid @enderror" required>
                         <option value="">Pilih varietas</option>
                         @foreach($riceVarieties as $variety)
                             <option value="{{ $variety->id }}" @selected(old('rice_variety_id') === $variety->id)>{{ $variety->code }} - {{ $variety->name }}</option>
                         @endforeach
                     </select>
+                    @error('rice_variety_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
-                    <label for="seed_class_id" class="form-label">Kelas Benih Tujuan</label>
-                    <select id="seed_class_id" name="seed_class_id" class="form-select" required>
+                    <label for="seed_class_id" class="form-label">Kelas Benih Tujuan <span class="text-danger">*</span></label>
+                    <select id="seed_class_id" name="seed_class_id" class="form-select @error('seed_class_id') is-invalid @enderror" required>
                         <option value="">Pilih kelas benih</option>
                         @foreach($seedClasses as $seedClass)
                             <option value="{{ $seedClass->id }}" @selected(old('seed_class_id') === $seedClass->id)>{{ $seedClass->code }} - {{ $seedClass->name }}</option>
                         @endforeach
                     </select>
+                    @error('seed_class_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="col-md-5">
-                    <label for="source_seed_item_id" class="form-label">Benih Sumber</label>
-                    <select id="source_seed_item_id" name="source_seed_item_id" class="form-select" required>
+                    <label for="source_seed_item_id" class="form-label">Benih Sumber <span class="text-danger">*</span></label>
+                    <select id="source_seed_item_id" name="source_seed_item_id" class="form-select @error('source_seed_item_id') is-invalid @enderror" required>
                         <option value="">Pilih barang benih</option>
                         @foreach($sourceSeedItems as $item)
                             <option
@@ -116,6 +129,7 @@
                             </option>
                         @endforeach
                     </select>
+                    @error('source_seed_item_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     <div class="form-text" id="source_seed_item_help">Pilih varietas terlebih dahulu.</div>
                     <a
                         href="{{ route('master.items.create', [
@@ -126,25 +140,27 @@
                         class="btn btn-sm btn-label-primary mt-2 d-none"
                         id="add_source_seed_item_link"
                     >
-                        <i class="bx bx-plus me-1"></i> Tambah Benih Sumber
+                        <i class="icon-base bx bx-plus me-1"></i> Tambah Benih Sumber
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <label for="source_seed_warehouse_id" class="form-label">Gudang Benih Sumber</label>
-                    <select id="source_seed_warehouse_id" name="source_seed_warehouse_id" class="form-select" required>
+                    <label for="source_seed_warehouse_id" class="form-label">Gudang Benih Sumber <span class="text-danger">*</span></label>
+                    <select id="source_seed_warehouse_id" name="source_seed_warehouse_id" class="form-select @error('source_seed_warehouse_id') is-invalid @enderror" required>
                         <option value="">Pilih gudang</option>
                         @foreach($warehouses as $warehouse)
                             <option value="{{ $warehouse->id }}" @selected(old('source_seed_warehouse_id') === $warehouse->id)>{{ $warehouse->code }} - {{ $warehouse->name }}</option>
                         @endforeach
                     </select>
+                    @error('source_seed_warehouse_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     <div class="form-text" id="source_seed_warehouse_help">Gudang mengikuti stok benih sumber yang dipilih.</div>
                     <a href="{{ route('stocks.create') }}" class="btn btn-sm btn-label-primary mt-2 d-none" id="adjust_source_seed_stock_link">
-                        <i class="bx bx-edit me-1"></i> Penyesuaian Stok
+                        <i class="icon-base bx bx-edit me-1"></i> Penyesuaian Stok
                     </a>
                 </div>
                 <div class="col-md-3">
-                    <label for="source_seed_quantity" class="form-label">Jumlah Benih Sumber</label>
-                    <input type="number" step="0.01" min="0.01" id="source_seed_quantity" name="source_seed_quantity" value="{{ old('source_seed_quantity') }}" class="form-control" required>
+                    <label for="source_seed_quantity" class="form-label">Jumlah Benih Sumber <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" min="0.01" id="source_seed_quantity" name="source_seed_quantity" value="{{ old('source_seed_quantity') }}" class="form-control @error('source_seed_quantity') is-invalid @enderror" required>
+                    @error('source_seed_quantity') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     <div class="form-text" id="source_seed_quantity_help">Pilih varietas, benih sumber, dan gudang.</div>
                 </div>
 
@@ -186,7 +202,7 @@
         <div class="card-footer d-flex justify-content-end gap-2">
             <a href="{{ route('seed-growings.index') }}" class="btn btn-label-secondary">Batal</a>
             <button type="submit" class="btn btn-primary">
-                <i class="bx bx-save me-1"></i> Simpan
+                <i class="icon-base bx bx-save me-1"></i> Simpan
             </button>
         </div>
     </form>
@@ -381,6 +397,13 @@
 
             if (adjustSourceSeedStockLink) {
                 adjustSourceSeedStockLink.classList.toggle('d-none', ! itemId || availableWarehouses > 0);
+                const stockUrl = new URL(adjustSourceSeedStockLink.href, window.location.origin);
+                if (itemId) {
+                    stockUrl.searchParams.set('item_id', itemId);
+                } else {
+                    stockUrl.searchParams.delete('item_id');
+                }
+                adjustSourceSeedStockLink.href = stockUrl.toString();
             }
         }
 
@@ -419,13 +442,14 @@
         }
 
         function fillSchedule() {
-            if (! plantingDate.value) {
-                return;
-            }
-
             Object.entries(scheduleFields).forEach(function ([fieldId, offset]) {
                 const field = document.getElementById(fieldId);
                 if (! field) {
+                    return;
+                }
+
+                if (! plantingDate.value) {
+                    field.value = '';
                     return;
                 }
 
