@@ -13,6 +13,9 @@ class WarehouseController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $warehouses = Warehouse::query()
             ->when($search, function ($query) use ($search) {
@@ -24,10 +27,10 @@ class WarehouseController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.warehouses.index', compact('warehouses', 'search'));
+        return view('master.warehouses.index', compact('warehouses', 'search', 'perPage'));
     }
 
     public function create(): View

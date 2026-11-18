@@ -13,6 +13,9 @@ class SeedClassController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $seedClasses = SeedClass::query()
             ->when($search, function ($query) use ($search) {
@@ -22,10 +25,10 @@ class SeedClassController extends Controller
                 });
             })
             ->orderBy('code')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.seed-classes.index', compact('seedClasses', 'search'));
+        return view('master.seed-classes.index', compact('seedClasses', 'search', 'perPage'));
     }
 
     public function create(): View

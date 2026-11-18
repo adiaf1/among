@@ -13,6 +13,9 @@ class RiceVarietyController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $riceVarieties = RiceVariety::query()
             ->when($search, function ($query) use ($search) {
@@ -22,10 +25,10 @@ class RiceVarietyController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.rice-varieties.index', compact('riceVarieties', 'search'));
+        return view('master.rice-varieties.index', compact('riceVarieties', 'search', 'perPage'));
     }
 
     public function create(): View

@@ -20,6 +20,9 @@ class CustomerController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $customers = Customer::query()
             ->when($search, function ($query) use ($search) {
@@ -33,10 +36,15 @@ class CustomerController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.customers.index', compact('customers', 'search'));
+        return view('master.customers.index', [
+            'customers' => $customers,
+            'search' => $search,
+            'perPage' => $perPage,
+            'types' => self::TYPES,
+        ]);
     }
 
     public function create(): View

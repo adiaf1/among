@@ -13,6 +13,9 @@ class FarmerController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $farmers = Farmer::query()
             ->when($search, function ($query) use ($search) {
@@ -24,10 +27,15 @@ class FarmerController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.farmers.index', compact('farmers', 'search'));
+        return view('master.farmers.index', [
+            'farmers' => $farmers,
+            'search' => $search,
+            'perPage' => $perPage,
+            'nextCode' => $this->generateCode(),
+        ]);
     }
 
     public function create(): View

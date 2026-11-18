@@ -13,6 +13,9 @@ class SupplierController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $suppliers = Supplier::query()
             ->when($search, function ($query) use ($search) {
@@ -25,10 +28,15 @@ class SupplierController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('master.suppliers.index', compact('suppliers', 'search'));
+        return view('master.suppliers.index', [
+            'suppliers' => $suppliers,
+            'search' => $search,
+            'perPage' => $perPage,
+            'nextCode' => $this->generateCode(),
+        ]);
     }
 
     public function create(): View

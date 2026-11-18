@@ -21,6 +21,9 @@ class LandController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $lands = Land::with('farmer')
             ->when($search, function ($query) use ($search) {
@@ -35,12 +38,14 @@ class LandController extends Controller
                 });
             })
             ->orderBy('code')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('master.lands.index', [
             'lands' => $lands,
             'search' => $search,
+            'perPage' => $perPage,
+            'farmers' => Farmer::where('is_active', true)->orderBy('name')->get(),
             'certificationStatuses' => self::CERTIFICATION_STATUSES,
         ]);
     }

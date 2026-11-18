@@ -47,6 +47,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/tagify/tagify.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/typeahead-js/typeahead.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.css') }}" />
 
      <!-- endbuild -->
 
@@ -62,7 +63,6 @@
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
 
     <script src="{{ asset('assets/js/config.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('assets/vendor/libs/tagify/tagify.js') }}"></script>
 
 </head>
@@ -324,9 +324,13 @@
                                               text: "You will be logged out!",
                                               icon: 'warning',
                                               showCancelButton: true,
-                                              confirmButtonColor: '#d33',
-                                              cancelButtonColor: '#3085d6',
-                                              confirmButtonText: 'Yes, log out!'
+                                              confirmButtonText: 'Yes, log out!',
+                                              cancelButtonText: 'Cancel',
+                                              customClass: {
+                                                  confirmButton: 'btn btn-danger me-2',
+                                                  cancelButton: 'btn btn-label-secondary'
+                                              },
+                                              buttonsStyling: false
                                           }).then((result) => {
                                               if (result.isConfirmed) {
                                                   // Log out with the form submission
@@ -581,6 +585,7 @@
     <script src="{{ asset('assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
     <script src="{{ asset('assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
     <script src="{{ asset('assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
+    <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.js') }}"></script>
 
 
     <!-- Page JS -->

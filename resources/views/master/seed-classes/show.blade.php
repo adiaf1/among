@@ -8,13 +8,25 @@
             <p class="text-muted mb-0">{{ $seedClass->code }} - {{ $seedClass->name }}</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('master.seed-classes.index') }}" class="btn btn-label-secondary">Kembali</a>
-            <a href="{{ route('master.seed-classes.edit', $seedClass) }}" class="btn btn-primary">Edit</a>
+            <a href="{{ route('master.seed-classes.index') }}" class="btn btn-label-secondary">
+                <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+            </a>
+            <a href="{{ route('master.seed-classes.edit', $seedClass) }}" class="btn btn-primary">
+                <i class="icon-base bx bx-edit-alt me-1"></i> Edit
+            </a>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0">Informasi Kelas Benih</h5>
+            @if($seedClass->is_active)
+                <span class="badge bg-label-success">Aktif</span>
+            @else
+                <span class="badge bg-label-secondary">Nonaktif</span>
+            @endif
+        </div>
+        <div class="card-body pt-4">
             <dl class="row mb-0">
                 <dt class="col-sm-3">Kode</dt>
                 <dd class="col-sm-9">{{ $seedClass->code }}</dd>
