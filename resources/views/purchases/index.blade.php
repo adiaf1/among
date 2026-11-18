@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Transaksi barang masuk dari petani atau supplier ke gudang per periode tanggal.</p>
         </div>
         <a href="{{ route('purchases.create') }}" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> Tambah
+            <i class="icon-base bx bx-plus me-1"></i> Tambah
         </a>
     </div>
 
@@ -75,7 +75,7 @@
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
                     @forelse($purchases as $purchase)
                         @php
                             $sourceName = $purchase->supplier?->name ?? $purchase->farmer?->name ?? '-';
@@ -90,8 +90,8 @@
                             </td>
                             <td>Rp {{ number_format((float) $purchase->total_amount, 2, ',', '.') }}</td>
                             <td class="text-end">
-                                <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-label-primary">
-                                    <i class="bx bx-show me-1"></i> Detail
+                                <a href="{{ route('purchases.show', $purchase) }}" class="btn btn-sm btn-outline-primary">
+                                    <span class="icon-base bx bx-show icon-sm me-1"></span>Detail
                                 </a>
                             </td>
                         </tr>

@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Saldo stok barang per gudang dan riwayat pergerakannya.</p>
         </div>
         <a href="{{ route('stocks.create') }}" class="btn btn-primary">
-            <i class="bx bx-edit me-1"></i> Penyesuaian Stok
+            <i class="icon-base bx bx-edit me-1"></i> Penyesuaian Stok
         </a>
     </div>
 
@@ -74,7 +74,7 @@
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
                     @forelse($stocks as $stock)
                         <tr>
                             <td>
@@ -97,8 +97,8 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('stocks.show', $stock) }}" class="btn btn-sm btn-label-primary">
-                                    <i class="bx bx-list-ul me-1"></i> Kartu Stok
+                                <a href="{{ route('stocks.show', $stock) }}" class="btn btn-sm btn-outline-primary">
+                                    <span class="icon-base bx bx-list-ul icon-sm me-1"></span>Kartu Stok
                                 </a>
                             </td>
                         </tr>

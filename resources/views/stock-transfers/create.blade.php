@@ -105,7 +105,7 @@
 
                 @php
                     $oldItems = old('items', [
-                        ['item_id' => '', 'quantity' => ''],
+                        ['item_id' => '', 'stock_id' => '', 'quantity' => ''],
                     ]);
                 @endphp
 
@@ -120,7 +120,8 @@
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
-                                <th style="min-width: 300px;">Barang</th>
+                                <th style="min-width: 260px;">Barang</th>
+                                <th style="min-width: 240px;">Lot / Stok Asal</th>
                                 <th style="min-width: 160px;">Jumlah</th>
                                 <th style="width: 72px;" class="text-center">Aksi</th>
                             </tr>
@@ -143,6 +144,19 @@
                                             @endforeach
                                         </select>
                                         @error("items.$index.item_id")
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </td>
+                                    <td>
+                                        <select
+                                            data-field="stock_id"
+                                            data-selected="{{ $oldItem['stock_id'] ?? '' }}"
+                                            class="form-select @error("items.$index.stock_id") is-invalid @enderror"
+                                            name="items[{{ $index }}][stock_id]"
+                                        >
+                                            <option value="">Otomatis / Pilih lot</option>
+                                        </select>
+                                        @error("items.$index.stock_id")
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </td>
@@ -188,6 +202,8 @@
             'value' => $item->id,
             'label' => "{$item->code} - {$item->name} (".strtoupper($item->unit).")",
         ])->values());
+        const availableStocks = @json($availableStocks);
+        const sourceWarehouseSelect = document.getElementById('source_warehouse_id');
         const tableBody = document.getElementById('transfer-items-body');
 
         const optionHtml = function (options, placeholder) {
@@ -197,6 +213,53 @@
                     return `<option value="${option.value}">${option.label}</option>`;
                 })
             ].join('');
+        };
+
+        const formatQty = function (qty) {
+            return Number(qty).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const syncStockOptions = function (row) {
+            const warehouseId = sourceWarehouseSelect?.value || '';
+            const itemSelect = row.querySelector('[data-field="item_id"]');
+            const stockSelect = row.querySelector('[data-field="stock_id"]');
+            if (!itemSelect || !stockSelect) return;
+
+            const itemId = itemSelect.value;
+            const previousValue = stockSelect.value || stockSelect.dataset.selected || '';
+            stockSelect.dataset.selected = '';
+
+            if (!warehouseId || !itemId) {
+                stockSelect.innerHTML = '<option value="">Pilih gudang asal & barang</option>';
+                return;
+            }
+
+            const matches = availableStocks.filter(function (s) {
+                return s.warehouse_id === warehouseId && s.item_id === itemId;
+            });
+
+            if (!matches.length) {
+                stockSelect.innerHTML = '<option value="">Stok kosong di gudang asal</option>';
+                return;
+            }
+
+            stockSelect.innerHTML = [
+                '<option value="">Pilih lot / stok</option>',
+                ...matches.map(function (s) {
+                    const lotLabel = s.lot_number ? `Lot ${s.lot_number}` : 'Tanpa Lot';
+                    return `<option value="${s.id}">${lotLabel} (Saldo: ${formatQty(s.quantity)} ${s.unit})</option>`;
+                })
+            ].join('');
+
+            if (previousValue && matches.some(function (s) { return s.id === previousValue; })) {
+                stockSelect.value = previousValue;
+            } else if (matches.length === 1) {
+                stockSelect.value = matches[0].id;
+            }
+        };
+
+        const syncAllStockOptions = function () {
+            tableBody.querySelectorAll('[data-transfer-item-row]').forEach(syncStockOptions);
         };
 
         const syncRows = function () {
@@ -221,6 +284,11 @@
                     </select>
                 </td>
                 <td>
+                    <select class="form-select" data-field="stock_id">
+                        <option value="">Pilih gudang asal & barang</option>
+                    </select>
+                </td>
+                <td>
                     <input type="number" class="form-control" data-field="quantity" min="0.01" max="9999999999.99" step="0.01" required>
                 </td>
                 <td class="text-center">
@@ -230,8 +298,19 @@
                 </td>
             `;
 
+            syncStockOptions(row);
+
             return row;
         };
+
+        sourceWarehouseSelect?.addEventListener('change', syncAllStockOptions);
+
+        tableBody.addEventListener('change', function (event) {
+            if (event.target.matches('[data-field="item_id"]')) {
+                const row = event.target.closest('[data-transfer-item-row]');
+                if (row) syncStockOptions(row);
+            }
+        });
 
         document.getElementById('add-transfer-item-row')?.addEventListener('click', function () {
             tableBody.appendChild(createRow());
@@ -250,6 +329,7 @@
         });
 
         syncRows();
+        syncAllStockOptions();
     });
 </script>
 @endsection

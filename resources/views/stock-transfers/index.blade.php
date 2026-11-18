@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Perpindahan stok barang dari satu gudang ke gudang lain.</p>
         </div>
         <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary">
-            <i class="bx bx-plus me-1"></i> Tambah
+            <i class="icon-base bx bx-plus me-1"></i> Tambah
         </a>
     </div>
 
@@ -20,23 +20,23 @@
     @endif
 
     <div class="card">
-        <div class="card-header border-bottom">
-            <form method="GET" action="{{ route('stock-transfers.index') }}" class="row g-3 align-items-center">
-                <div class="col-md-8 col-lg-6">
+        <div class="card-header border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <h5 class="card-title mb-0">Daftar Mutasi Stok</h5>
+            <form method="GET" action="{{ route('stock-transfers.index') }}" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                <div class="input-group input-group-merge" style="min-width: 260px;">
+                    <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
                     <input
                         type="search"
                         name="search"
                         value="{{ $search }}"
                         class="form-control"
-                        placeholder="Cari nomor atau gudang"
+                        placeholder="Cari nomor atau gudang..."
                     >
                 </div>
-                <div class="col-md-auto d-flex gap-2">
-                    <button type="submit" class="btn btn-label-primary">Cari</button>
-                    @if($search)
-                        <a href="{{ route('stock-transfers.index') }}" class="btn btn-label-secondary">Reset</a>
-                    @endif
-                </div>
+                @if($search)
+                    <a href="{{ route('stock-transfers.index', ['per_page' => $perPage]) }}" class="btn btn-label-secondary">Reset</a>
+                @endif
             </form>
         </div>
 
@@ -51,7 +51,7 @@
                         <th class="text-end">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
                     @forelse($stockTransfers as $stockTransfer)
                         <tr>
                             <td><span class="fw-medium">{{ $stockTransfer->number }}</span></td>
@@ -59,8 +59,8 @@
                             <td>{{ $stockTransfer->sourceWarehouse->name }}</td>
                             <td>{{ $stockTransfer->destinationWarehouse->name }}</td>
                             <td class="text-end">
-                                <a href="{{ route('stock-transfers.show', $stockTransfer) }}" class="btn btn-sm btn-label-primary">
-                                    <i class="bx bx-show me-1"></i> Detail
+                                <a href="{{ route('stock-transfers.show', $stockTransfer) }}" class="btn btn-sm btn-outline-primary">
+                                    <span class="icon-base bx bx-show icon-sm me-1"></span>Detail
                                 </a>
                             </td>
                         </tr>
@@ -73,8 +73,26 @@
             </table>
         </div>
 
-        <div class="card-footer">
-            {{ $stockTransfers->links('pagination::bootstrap-4') }}
+        <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <form method="GET" action="{{ route('stock-transfers.index') }}" class="d-flex align-items-center gap-2">
+                    @if($search)
+                        <input type="hidden" name="search" value="{{ $search }}">
+                    @endif
+                    <label for="per_page" class="text-muted small mb-0">Tampilkan</label>
+                    <select id="per_page" name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <span class="text-muted small">
+                    Menampilkan {{ $stockTransfers->firstItem() ?? 0 }} - {{ $stockTransfers->lastItem() ?? 0 }} dari {{ $stockTransfers->total() }} data
+                </span>
+            </div>
+            <div>
+                {{ $stockTransfers->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 </div>

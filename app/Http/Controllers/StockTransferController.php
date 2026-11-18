@@ -19,25 +19,30 @@ class StockTransferController extends Controller
     public function index(Request $request): View
     {
         $search = $request->string('search')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $stockTransfers = StockTransfer::query()
             ->with(['sourceWarehouse', 'destinationWarehouse'])
             ->when($search, function ($query) use ($search) {
-                $query->where('number', 'like', "%{$search}%")
-                    ->orWhereHas('sourceWarehouse', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('destinationWarehouse', function ($query) use ($search) {
-                        $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%");
-                    });
+                $query->where(function ($query) use ($search) {
+                    $query->where('number', 'like', "%{$search}%")
+                        ->orWhereHas('sourceWarehouse', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('destinationWarehouse', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        });
+                });
             })
             ->latest('created_at')
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('stock-transfers.index', compact('stockTransfers', 'search'));
+        return view('stock-transfers.index', compact('stockTransfers', 'search', 'perPage'));
     }
 
     public function create(): View
@@ -45,6 +50,20 @@ class StockTransferController extends Controller
         return view('stock-transfers.create', [
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
+            'availableStocks' => Stock::query()
+                ->with('item')
+                ->where('quantity', '>', 0)
+                ->orderBy('lot_number')
+                ->get()
+                ->map(fn (Stock $stock) => [
+                    'id' => $stock->id,
+                    'warehouse_id' => $stock->warehouse_id,
+                    'item_id' => $stock->item_id,
+                    'lot_number' => $stock->lot_number,
+                    'quantity' => (float) $stock->quantity,
+                    'unit' => strtoupper($stock->item?->unit ?? ''),
+                ])
+                ->values(),
         ]);
     }
 
@@ -66,6 +85,7 @@ class StockTransferController extends Controller
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'uuid', 'exists:items,id'],
+            'items.*.stock_id' => ['nullable', 'uuid', 'exists:stocks,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:9999999999.99'],
         ]);
 
@@ -85,8 +105,14 @@ class StockTransferController extends Controller
                 $quantity = (float) $detail['quantity'];
                 $item = Item::findOrFail($detail['item_id']);
 
-                $sourceStock = Stock::where('item_id', $detail['item_id'])
-                    ->where('warehouse_id', $validated['source_warehouse_id'])
+                $sourceStockQuery = Stock::where('item_id', $detail['item_id'])
+                    ->where('warehouse_id', $validated['source_warehouse_id']);
+
+                if (filled($detail['stock_id'] ?? null)) {
+                    $sourceStockQuery->where('id', $detail['stock_id']);
+                }
+
+                $sourceStock = $sourceStockQuery
                     ->lockForUpdate()
                     ->first();
 

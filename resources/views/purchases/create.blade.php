@@ -239,7 +239,7 @@
                     </button>
                 </div>
 
-                <div class="table-responsive mb-4">
+                <div class="table-responsive purchase-items-table-wrap mb-4">
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
@@ -416,6 +416,12 @@
     @media (max-width: 575.98px) {
         .source-identity-grid {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .purchase-items-table-wrap {
+            overflow: visible;
         }
     }
 </style>
@@ -595,7 +601,9 @@
                 renderOptions();
             });
             searchInput.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape') {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                } else if (event.key === 'Escape') {
                     closeMenu();
                 }
             });
@@ -675,7 +683,9 @@
                 renderOptions();
             });
             input.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape') {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                } else if (event.key === 'Escape') {
                     closeMenu();
                 }
             });
@@ -838,7 +848,9 @@
                 renderOptions();
             });
             searchInput.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape') {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                } else if (event.key === 'Escape') {
                     closeMenu();
                 }
             });

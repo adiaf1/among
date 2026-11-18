@@ -105,6 +105,59 @@ class StockTransferTest extends TestCase
         ]);
     }
 
+    public function test_stock_transfer_can_target_specific_lot_via_stock_id(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $item = $this->item();
+        [$sourceWarehouse, $destinationWarehouse] = $this->warehouses();
+
+        $lot1 = Stock::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $sourceWarehouse->id,
+            'lot_number' => 'LOT-001',
+            'quantity' => 500,
+        ]);
+
+        $lot2 = Stock::create([
+            'item_id' => $item->id,
+            'warehouse_id' => $sourceWarehouse->id,
+            'lot_number' => 'LOT-002',
+            'quantity' => 400,
+        ]);
+
+        $response = $this->actingAs($editor)->post(route('stock-transfers.store'), [
+            'number' => 'MT-LOT-01',
+            'transfer_date' => '2026-06-10',
+            'source_warehouse_id' => $sourceWarehouse->id,
+            'destination_warehouse_id' => $destinationWarehouse->id,
+            'items' => [
+                [
+                    'item_id' => $item->id,
+                    'stock_id' => $lot2->id,
+                    'quantity' => 150,
+                ],
+            ],
+        ]);
+
+        $stockTransfer = StockTransfer::where('number', 'MT-LOT-01')->first();
+
+        $response->assertRedirect(route('stock-transfers.show', $stockTransfer));
+        $this->assertDatabaseHas('stocks', [
+            'id' => $lot1->id,
+            'quantity' => 500,
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'id' => $lot2->id,
+            'quantity' => 250,
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'item_id' => $item->id,
+            'warehouse_id' => $destinationWarehouse->id,
+            'lot_number' => 'LOT-002',
+            'quantity' => 150,
+        ]);
+    }
+
     public function test_stock_transfer_rejects_insufficient_stock(): void
     {
         $admin = $this->userWithRole('admin');
