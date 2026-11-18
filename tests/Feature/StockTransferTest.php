@@ -150,6 +150,12 @@ class StockTransferTest extends TestCase
             'id' => $lot2->id,
             'quantity' => 250,
         ]);
+        $this->assertDatabaseHas('stock_transfer_items', [
+            'stock_transfer_id' => $stockTransfer->id,
+            'item_id' => $item->id,
+            'lot_number' => 'LOT-002',
+            'quantity' => 150,
+        ]);
         $this->assertDatabaseHas('stocks', [
             'item_id' => $item->id,
             'warehouse_id' => $destinationWarehouse->id,

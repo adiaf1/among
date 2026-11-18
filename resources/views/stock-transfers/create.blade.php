@@ -2,13 +2,22 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="py-4">
-        <h4 class="mb-1">Tambah Mutasi Stok</h4>
-        <p class="text-muted mb-0">Pindahkan stok dari gudang asal ke gudang tujuan.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4">
+        <div>
+            <h4 class="mb-1">Tambah Mutasi Stok</h4>
+            <p class="text-muted mb-0">Pindahkan stok dari gudang asal ke gudang tujuan.</p>
+        </div>
+        <a href="{{ route('stock-transfers.index') }}" class="btn btn-label-secondary">
+            <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+        </a>
     </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0">Form Mutasi Stok</h5>
+            <small class="text-body-secondary float-end">Persediaan</small>
+        </div>
+        <div class="card-body pt-4">
             <form method="POST" action="{{ route('stock-transfers.store') }}">
                 @csrf
 
@@ -24,10 +33,11 @@
                             class="form-control @error('number') is-invalid @enderror"
                             id="number"
                             name="number"
-                            value="{{ old('number') }}"
+                            value="{{ old('number', $nextNumber) }}"
                             maxlength="100"
                             placeholder="Kosongkan untuk otomatis"
                         >
+                        <div class="form-text">Otomatis (<code>MT-YYYYMMDD-XXXX</code>), bisa diubah.</div>
                         @error('number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -112,11 +122,11 @@
                 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                     <h6 class="mb-0">Detail Barang</h6>
                     <button type="button" class="btn btn-label-primary btn-sm" id="add-transfer-item-row">
-                        <i class="bx bx-plus me-1"></i> Tambah Baris
+                        <i class="icon-base bx bx-plus me-1"></i> Tambah Baris
                     </button>
                 </div>
 
-                <div class="table-responsive text-nowrap mb-4">
+                <div class="table-responsive transfer-items-table-wrap text-nowrap mb-4">
                     <table class="table table-bordered align-middle">
                         <thead>
                             <tr>
@@ -132,8 +142,10 @@
                                     <td>
                                         <select
                                             data-field="item_id"
-                                            class="form-select @error("items.$index.item_id") is-invalid @enderror"
+                                            data-selected="{{ $oldItem['item_id'] ?? '' }}"
+                                            class="select2 form-select @error("items.$index.item_id") is-invalid @enderror"
                                             name="items[{{ $index }}][item_id]"
+                                            data-placeholder="Pilih barang"
                                             required
                                         >
                                             <option value="">Pilih barang</option>
@@ -178,7 +190,7 @@
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-icon btn-label-danger" data-remove-row title="Hapus baris">
-                                            <i class="bx bx-trash"></i>
+                                            <i class="icon-base bx bx-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -195,6 +207,14 @@
         </div>
     </div>
 </div>
+
+<style>
+    @media (min-width: 768px) {
+        .transfer-items-table-wrap {
+            overflow: visible;
+        }
+    }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -258,8 +278,46 @@
             }
         };
 
-        const syncAllStockOptions = function () {
-            tableBody.querySelectorAll('[data-transfer-item-row]').forEach(syncStockOptions);
+        const syncItemOptions = function (row) {
+            const warehouseId = sourceWarehouseSelect?.value || '';
+            const itemSelect = row.querySelector('[data-field="item_id"]');
+            if (!itemSelect) return;
+
+            const previousValue = itemSelect.value || itemSelect.dataset.selected || '';
+            itemSelect.dataset.selected = '';
+
+            if (!warehouseId) {
+                itemSelect.innerHTML = '<option value="">Pilih gudang asal terlebih dahulu</option>';
+                itemSelect.value = '';
+            } else {
+                const availableItemIds = new Set(
+                    availableStocks
+                        .filter(function (s) { return s.warehouse_id === warehouseId; })
+                        .map(function (s) { return s.item_id; })
+                );
+
+                const filteredItems = itemOptions.filter(function (option) {
+                    return availableItemIds.has(option.value);
+                });
+
+                if (!filteredItems.length) {
+                    itemSelect.innerHTML = '<option value="">Tidak ada stok di gudang asal</option>';
+                    itemSelect.value = '';
+                } else {
+                    itemSelect.innerHTML = optionHtml(filteredItems, 'Pilih barang');
+                    itemSelect.value = availableItemIds.has(previousValue) ? previousValue : '';
+                }
+            }
+
+            if (window.jQuery && window.jQuery(itemSelect).hasClass('select2-hidden-accessible')) {
+                window.jQuery(itemSelect).trigger('change.select2');
+            }
+
+            syncStockOptions(row);
+        };
+
+        const syncAllRowOptions = function () {
+            tableBody.querySelectorAll('[data-transfer-item-row]').forEach(syncItemOptions);
         };
 
         const syncRows = function () {
@@ -271,6 +329,28 @@
 
             tableBody.querySelectorAll('[data-remove-row]').forEach(function (button) {
                 button.disabled = tableBody.querySelectorAll('[data-transfer-item-row]').length === 1;
+            });
+        };
+
+        const initRowSelect2 = function (row) {
+            if (!window.jQuery || !window.jQuery.fn.select2) return;
+
+            const itemSelect = row.querySelector('[data-field="item_id"]');
+            if (!itemSelect) return;
+
+            const $select = window.jQuery(itemSelect);
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.on('change.stockSync', function () {
+                    syncStockOptions(row);
+                });
+                return;
+            }
+
+            $select.wrap('<div class="position-relative"></div>').select2({
+                placeholder: 'Pilih barang',
+                dropdownParent: $select.parent()
+            }).on('change.stockSync', function () {
+                syncStockOptions(row);
             });
         };
 
@@ -293,17 +373,17 @@
                 </td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-icon btn-label-danger" data-remove-row title="Hapus baris">
-                        <i class="bx bx-trash"></i>
+                        <i class="icon-base bx bx-trash"></i>
                     </button>
                 </td>
             `;
 
-            syncStockOptions(row);
+            syncItemOptions(row);
 
             return row;
         };
 
-        sourceWarehouseSelect?.addEventListener('change', syncAllStockOptions);
+        sourceWarehouseSelect?.addEventListener('change', syncAllRowOptions);
 
         tableBody.addEventListener('change', function (event) {
             if (event.target.matches('[data-field="item_id"]')) {
@@ -313,7 +393,9 @@
         });
 
         document.getElementById('add-transfer-item-row')?.addEventListener('click', function () {
-            tableBody.appendChild(createRow());
+            const row = createRow();
+            tableBody.appendChild(row);
+            initRowSelect2(row);
             syncRows();
         });
 
@@ -329,7 +411,8 @@
         });
 
         syncRows();
-        syncAllStockOptions();
+        tableBody.querySelectorAll('[data-transfer-item-row]').forEach(initRowSelect2);
+        syncAllRowOptions();
     });
 </script>
 @endsection

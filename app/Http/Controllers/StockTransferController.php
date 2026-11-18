@@ -48,6 +48,7 @@ class StockTransferController extends Controller
     public function create(): View
     {
         return view('stock-transfers.create', [
+            'nextNumber' => $this->generateNumber(),
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
             'availableStocks' => Stock::query()
@@ -133,6 +134,7 @@ class StockTransferController extends Controller
 
                 $transferItem = $stockTransfer->items()->create([
                     'item_id' => $detail['item_id'],
+                    'lot_number' => $sourceStock->lot_number,
                     'quantity' => $quantity,
                 ]);
 

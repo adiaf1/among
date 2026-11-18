@@ -8,8 +8,12 @@
             <p class="text-muted mb-0">{{ $stockTransfer->number }}</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('stock-transfers.index') }}" class="btn btn-label-secondary">Kembali</a>
-            <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary">Tambah</a>
+            <a href="{{ route('stock-transfers.index') }}" class="btn btn-label-secondary">
+                <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+            </a>
+            <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary">
+                <i class="icon-base bx bx-plus me-1"></i> Tambah
+            </a>
         </div>
     </div>
 
@@ -21,7 +25,10 @@
     @endif
 
     <div class="card mb-4">
-        <div class="card-body">
+        <div class="card-header border-bottom">
+            <h5 class="mb-0">Informasi Mutasi Stok</h5>
+        </div>
+        <div class="card-body pt-4">
             <dl class="row mb-0">
                 <dt class="col-sm-3">Nomor</dt>
                 <dd class="col-sm-9">{{ $stockTransfer->number }}</dd>
@@ -45,22 +52,29 @@
     </div>
 
     <div class="card">
+        <div class="card-header border-bottom">
+            <h5 class="mb-0">Rincian Barang</h5>
+        </div>
         <div class="table-responsive text-nowrap">
-            <table class="table table-hover">
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
+                        <th style="width: 48px;" class="text-center">No</th>
                         <th>Barang</th>
-                        <th>Jumlah</th>
+                        <th>No Lot</th>
+                        <th class="text-end">Jumlah</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
                     @foreach($stockTransfer->items as $detail)
                         <tr>
-                            <td>
+                            <td class="text-center text-muted">{{ $loop->iteration }}</td>
+                            <td class="text-wrap">
                                 <span class="fw-medium">{{ $detail->item->code }}</span>
                                 <div class="text-muted small">{{ $detail->item->name }}</div>
                             </td>
-                            <td>{{ number_format((float) $detail->quantity, 2, ',', '.') }} {{ strtoupper($detail->item->unit) }}</td>
+                            <td>{{ $detail->lot_number ?: '-' }}</td>
+                            <td class="text-end fw-medium">{{ number_format((float) $detail->quantity, 2, ',', '.') }} {{ strtoupper($detail->item->unit) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
