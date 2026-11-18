@@ -13,8 +13,15 @@
             </p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('stocks.index') }}" class="btn btn-label-secondary">Kembali</a>
-            <a href="{{ route('stocks.create') }}" class="btn btn-primary">Penyesuaian</a>
+            <a href="{{ route('stocks.index') }}" class="btn btn-label-secondary">
+                <i class="icon-base bx bx-arrow-back me-1"></i> Kembali
+            </a>
+            <a
+                href="{{ route('stocks.create', ['item_id' => $stock->item_id, 'warehouse_id' => $stock->warehouse_id, 'lot_number' => $stock->lot_number]) }}"
+                class="btn btn-primary"
+            >
+                <i class="icon-base bx bx-edit me-1"></i> Penyesuaian
+            </a>
         </div>
     </div>
 
@@ -53,28 +60,52 @@
     </div>
 
     <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0">Riwayat Pergerakan Stok</h5>
+            @if((float) $stock->quantity <= (float) $stock->item->minimum_stock)
+                <span class="badge bg-label-warning">Stok Minimum</span>
+            @else
+                <span class="badge bg-label-success">Stok Aman</span>
+            @endif
+        </div>
         <div class="table-responsive text-nowrap">
-            <table class="table table-hover">
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
                         <th>Tanggal</th>
                         <th>Tipe</th>
-                        <th>Masuk</th>
-                        <th>Keluar</th>
-                        <th>Saldo</th>
+                        <th class="text-end">Masuk</th>
+                        <th class="text-end">Keluar</th>
+                        <th class="text-end">Saldo</th>
                         <th>Referensi</th>
                         <th>Catatan</th>
                         <th>User</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-border-bottom-0">
+                    @php
+                        $movementTypes = [
+                            'purchase' => ['label' => 'Pembelian', 'badge' => 'bg-label-success'],
+                            'transfer_in' => ['label' => 'Mutasi Masuk', 'badge' => 'bg-label-success'],
+                            'transfer_out' => ['label' => 'Mutasi Keluar', 'badge' => 'bg-label-danger'],
+                            'adjustment' => ['label' => 'Penyesuaian', 'badge' => 'bg-label-warning'],
+                            'production_in' => ['label' => 'Hasil Produksi', 'badge' => 'bg-label-success'],
+                            'production_out' => ['label' => 'Pemakaian Produksi', 'badge' => 'bg-label-danger'],
+                        ];
+                    @endphp
                     @forelse($movements as $movement)
+                        @php
+                            $typeMeta = $movementTypes[$movement->type] ?? [
+                                'label' => ucfirst(str_replace('_', ' ', $movement->type)),
+                                'badge' => 'bg-label-info',
+                            ];
+                        @endphp
                         <tr>
                             <td>{{ $movement->movement_date?->format('d M Y') }}</td>
-                            <td><span class="badge bg-label-info">{{ ucfirst(str_replace('_', ' ', $movement->type)) }}</span></td>
-                            <td>{{ number_format((float) $movement->quantity_in, 2, ',', '.') }}</td>
-                            <td>{{ number_format((float) $movement->quantity_out, 2, ',', '.') }}</td>
-                            <td>{{ number_format((float) $movement->balance_after, 2, ',', '.') }}</td>
+                            <td><span class="badge {{ $typeMeta['badge'] }}">{{ $typeMeta['label'] }}</span></td>
+                            <td class="text-end">{{ number_format((float) $movement->quantity_in, 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $movement->quantity_out, 2, ',', '.') }}</td>
+                            <td class="text-end fw-medium">{{ number_format((float) $movement->balance_after, 2, ',', '.') }}</td>
                             <td>{{ $movement->reference_number ?: '-' }}</td>
                             <td>{{ $movement->notes ?: '-' }}</td>
                             <td>{{ $movement->creator?->name ?: '-' }}</td>
@@ -88,8 +119,23 @@
             </table>
         </div>
 
-        <div class="card-footer">
-            {{ $movements->links('pagination::bootstrap-4') }}
+        <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <form method="GET" action="{{ route('stocks.show', $stock) }}" class="d-flex align-items-center gap-2">
+                    <label for="per_page" class="text-muted small mb-0">Tampilkan</label>
+                    <select id="per_page" name="per_page" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                        @foreach([10, 25, 50, 100] as $size)
+                            <option value="{{ $size }}" @selected($perPage === $size)>{{ $size }}</option>
+                        @endforeach
+                    </select>
+                </form>
+                <span class="text-muted small">
+                    Menampilkan {{ $movements->firstItem() ?? 0 }} - {{ $movements->lastItem() ?? 0 }} dari {{ $movements->total() }} data
+                </span>
+            </div>
+            <div>
+                {{ $movements->links('pagination::bootstrap-4') }}
+            </div>
         </div>
     </div>
 </div>

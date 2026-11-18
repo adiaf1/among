@@ -61,6 +61,15 @@ class StockController extends Controller
         return view('stocks.create', [
             'items' => Item::where('is_active', true)->orderBy('name')->get(),
             'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
+            'existingStocks' => Stock::query()
+                ->get(['item_id', 'warehouse_id', 'lot_number', 'quantity'])
+                ->map(fn (Stock $stock) => [
+                    'item_id' => $stock->item_id,
+                    'warehouse_id' => $stock->warehouse_id,
+                    'lot_number' => $stock->lot_number ?? '',
+                    'quantity' => (float) $stock->quantity,
+                ])
+                ->values(),
         ]);
     }
 
@@ -118,16 +127,21 @@ class StockController extends Controller
             ->with('success', 'Stok berhasil disesuaikan.');
     }
 
-    public function show(Stock $stock): View
+    public function show(Request $request, Stock $stock): View
     {
         $stock->load(['item', 'warehouse']);
+
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
 
         $movements = $stock->movements()
             ->with('creator')
             ->latest('movement_date')
             ->latest()
-            ->paginate(10);
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('stocks.show', compact('stock', 'movements'));
+        return view('stocks.show', compact('stock', 'movements', 'perPage'));
     }
 }
