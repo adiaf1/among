@@ -371,136 +371,185 @@
                                     </a>
                                 </li>
 
-                                @hasanyrole('admin|editor')
+                                @php
+                                    $navUser = auth()->user();
+                                    $canAccessAnyMaster = $navUser && $navUser->canAccessModule([
+                                        'master.rice-varieties.manage',
+                                        'master.seed-classes.manage',
+                                        'master.farmers.manage',
+                                        'master.lands.manage',
+                                        'master.suppliers.manage',
+                                        'master.customers.manage',
+                                        'master.warehouses.manage',
+                                        'master.items.manage',
+                                    ]);
+                                    $canAccessAnyInventory = $navUser && $navUser->canAccessModule([
+                                        'stocks.manage',
+                                        'purchases.manage',
+                                        'sales.manage',
+                                        'stock-transfers.manage',
+                                    ]);
+                                @endphp
+
+                                @if($canAccessAnyMaster)
                                 <li class="menu-item {{ request()->is('master/*') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                                         <i class="menu-icon tf-icons bx bx-data"></i>
                                         <div data-i18n="Master Data">Master Data</div>
                                     </a>
                                     <ul class="menu-sub">
+                                        @if($navUser->canAccessModule('master.rice-varieties.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.rice-varieties.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.rice-varieties.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-leaf"></i>
                                                 <div data-i18n="Varietas Padi">Varietas Padi</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.seed-classes.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.seed-classes.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.seed-classes.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-certification"></i>
                                                 <div data-i18n="Kelas Benih">Kelas Benih</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.farmers.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.farmers.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.farmers.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-user-pin"></i>
                                                 <div data-i18n="Petani">Petani</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.lands.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.lands.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.lands.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-map"></i>
                                                 <div data-i18n="Lahan">Lahan</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.suppliers.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.suppliers.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.suppliers.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-store"></i>
                                                 <div data-i18n="Supplier">Supplier</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.customers.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.customers.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.customers.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-group"></i>
                                                 <div data-i18n="Pelanggan">Pelanggan</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.warehouses.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.warehouses.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.warehouses.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-building-house"></i>
                                                 <div data-i18n="Gudang">Gudang</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('master.items.manage'))
                                         <li class="menu-item {{ request()->routeIs('master.items.*') ? 'active' : '' }}">
                                             <a href="{{ route('master.items.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-package"></i>
                                                 <div data-i18n="Barang">Barang</div>
                                             </a>
                                         </li>
+                                        @endif
                                     </ul>
                                 </li>
-                                @endhasanyrole
+                                @endif
 
-                                @hasanyrole('admin|editor')
-                                <li class="menu-item {{ request()->routeIs('stocks.*') || request()->routeIs('purchases.*') || request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
+                                @if($canAccessAnyInventory)
+                                <li class="menu-item {{ request()->routeIs('stocks.*') || request()->routeIs('purchases.*') || request()->routeIs('sales.*') || request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">
                                         <i class="menu-icon tf-icons bx bx-layer"></i>
                                         <div data-i18n="Persediaan">Persediaan</div>
                                     </a>
                                     <ul class="menu-sub">
+                                        @if($navUser->canAccessModule('stocks.manage'))
                                         <li class="menu-item {{ request()->routeIs('stocks.*') ? 'active' : '' }}">
                                             <a href="{{ route('stocks.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-layer"></i>
                                                 <div data-i18n="Stok">Stok</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('purchases.manage'))
                                         <li class="menu-item {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
                                             <a href="{{ route('purchases.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-cart-add"></i>
                                                 <div data-i18n="Pembelian Barang">Pembelian Barang</div>
                                             </a>
                                         </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('sales.manage'))
+                                        <li class="menu-item {{ request()->routeIs('sales.*') ? 'active' : '' }}">
+                                            <a href="{{ route('sales.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-shopping-bag"></i>
+                                                <div data-i18n="Penjualan Barang">Penjualan Barang</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('stock-transfers.manage'))
                                         <li class="menu-item {{ request()->routeIs('stock-transfers.*') ? 'active' : '' }}">
                                             <a href="{{ route('stock-transfers.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-transfer"></i>
                                                 <div data-i18n="Mutasi Stok">Mutasi Stok</div>
                                             </a>
                                         </li>
+                                        @endif
                                     </ul>
                                 </li>
-                                @endhasanyrole
+                                @endif
 
-                                @hasanyrole('admin|editor')
+                                @if($navUser && $navUser->canAccessModule('seed-growings.manage'))
                                 <li class="menu-item {{ request()->routeIs('seed-growings.*') ? 'active' : '' }}">
                                     <a href="{{ route('seed-growings.index') }}" class="menu-link">
                                         <i class="menu-icon tf-icons bx bx-certification"></i>
                                         <div data-i18n="Penangkaran Benih">Penangkaran Benih</div>
                                     </a>
                                 </li>
-                                @endhasanyrole
+                                @endif
 
-                                @hasanyrole('admin|editor')
+                                @if($navUser && $navUser->canAccessModule('seed-productions.manage'))
                                 <li class="menu-item {{ request()->routeIs('seed-productions.*') ? 'active' : '' }}">
                                     <a href="{{ route('seed-productions.index') }}" class="menu-link">
                                         <i class="menu-icon tf-icons bx bx-cog"></i>
                                         <div data-i18n="Produksi Benih">Produksi Benih</div>
                                     </a>
                                 </li>
-                                @endhasanyrole
+                                @endif
 
-                                @hasanyrole('admin|editor')
-                                <!-- Users -->
-                                <li class="menu-item {{ request()->is('users','roles','permissions') ? 'active' : '' }}">
+                                @if($navUser && $navUser->isSuperAdmin())
+                                <!-- Users & Permission Groups (Super Admin Only) -->
+                                <li class="menu-item {{ request()->routeIs('users.*') || request()->routeIs('permission-groups.*') ? 'active' : '' }}">
                                     <a href="javascript:void(0)" class="menu-link menu-toggle">
-                                        <i class="menu-icon tf-icons bx bx-user"></i>
-                                        <div data-i18n="Manage Users">Manage users</div>
+                                        <i class="menu-icon tf-icons bx bx-check-shield"></i>
+                                        <div data-i18n="Manajemen User">Manajemen User</div>
                                     </a>
                                     <ul class="menu-sub">
-                                        <li class="menu-item {{ request()->is('users') ? 'active' : '' }}">
-                                            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                                        <li class="menu-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                                            <a href="{{ route('users.index') }}" class="menu-link">
                                                 <i class="menu-icon tf-icons bx bx-user"></i>
-                                                <div data-i18n="Users">Users</div>
+                                                <div data-i18n="Daftar Pengguna">Daftar Pengguna</div>
                                             </a>
-                                            <ul class="menu-sub">
-                                                <li class="menu-item {{ request()->is('users') ? 'active' : '' }}">
-                                                    <a href="{{ url('/users') }}" class="menu-link">
-                                                        <div data-i18n="List">List</div>
-                                                    </a>
-                                                </li>
-                                            </ul>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('permission-groups.*') ? 'active' : '' }}">
+                                            <a href="{{ route('permission-groups.index') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-lock-open-alt"></i>
+                                                <div data-i18n="Grup Permission">Grup Permission</div>
+                                            </a>
                                         </li>
                                     </ul>
                                 </li>
-                                @endhasanyrole
+                                @endif
 
                             </ul>
                         </div>

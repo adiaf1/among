@@ -1,0 +1,17 @@
+Saran Pengembangan Lanjutan (Prioritas)
+1. Stok Masuk Otomatis untuk "Benih Jadi" saat Produksi Selesai (Prioritas Tinggi)
+Kondisi saat ini: Di SeedProductionStepController.php, ketika tahap terakhir (Siap Salur) diubah menjadi Selesai, status produksi berubah menjadi Siap Salur, tetapi jumlah benih jadi hasil akhirnya belum otomatis masuk ke tabel stocks di Gudang Hasil.
+Saran: Tambahkan bagian Hasil Akhir Produksi (Benih Jadi) di seed-productions/show (mirip card Panen di seed-growings/show) untuk memilih barang benih jadi, gudang hasil, dan jumlah bersih (kg), sehingga otomatis menambah saldo Stock dan mencatat StockMovement (seed_production_output).
+2. Modul Penjualan / Penyaluran Benih (Sales / Distributions)
+Kondisi saat ini: Master Pelanggan (/master/customers: Perorangan, Kios, Distributor, Instansi) sudah tersedia, namun belum ada menu transaksi keluar untuk menjual/menyalurkan benih jadi ke pelanggan.
+Saran: Buat modul Penjualan / Penyaluran Benih yang memotong stok benih jadi di gudang, mencatat piutang/pembayaran, dan mencetak Invoice / Surat Jalan.
+3. Pencatatan Uji Lab & Label Sertifikasi (Standar BPSB)
+Saran: Pada seed-productions/show, tambahkan informasi sertifikasi benih sebelum Siap Salur: Kadar Air (%), Daya Berkecambah (%), Kemurnian (%), Nomor Induk Sertifikasi / Seri Label, dan Tanggal Kedaluwarsa Label.
+4. Dashboard Operasional & Kalkulasi HPP Benih
+Kondisi saat ini: DashboardController.php masih menampilkan halaman statis tanpa query data aktual.
+Saran: Tampilkan ringkasan aktif di Dashboard:
+Peringatan Stok Minimum
+Jadwal Pemeriksaan Lapang terdekat yang belum selesai
+Ringkasan HPP per Kg Benih Jadi (akumulasi nilai bahan + biaya tahapan dibagi berat bersih hasil produksi).
+
+Apakah ingin langsung kita lanjutkan dari poin 1 (Stok Masuk Otomatis untuk Benih Jadi saat Produksi Selesai)?

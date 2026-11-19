@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
 use App\Models\RiceVariety;
 use App\Models\SeedClass;
 use App\Models\SeedGrowing;
@@ -30,6 +31,12 @@ class SeedProductionController extends Controller
     private const INPUT_ROLES = [
         'bahan_utama' => 'Bahan Utama',
         'pendukung' => 'Bahan Pendukung',
+    ];
+
+    public const LAB_RESULTS = [
+        'menunggu' => 'Menunggu Hasil',
+        'lulus' => 'Lulus Uji Lab',
+        'tidak_lulus' => 'Tidak Lulus',
     ];
 
     private const STEPS = [
@@ -222,7 +229,9 @@ class SeedProductionController extends Controller
         $seedProduction->load([
             'riceVariety',
             'seedClass',
+            'outputItem',
             'outputWarehouse',
+            'outputStock',
             'inputs.item',
             'inputs.warehouse',
             'steps',
@@ -232,6 +241,7 @@ class SeedProductionController extends Controller
         return view('seed-productions.show', [
             'seedProduction' => $seedProduction,
             'statuses' => self::STATUSES,
+            'labResults' => self::LAB_RESULTS,
             'inputRoles' => self::INPUT_ROLES,
             'stocks' => $stocks,
             'additionalStockOptions' => $stocks->map(fn ($stock) => [
@@ -239,6 +249,12 @@ class SeedProductionController extends Controller
                 'label' => ($stock->item?->code ?? '-').' - '.($stock->item?->name ?? '-').' | '.($stock->warehouse?->name ?? '-').' | Lot '.($stock->lot_number ?: '-').' | Stok '.number_format((float) $stock->quantity, 2, ',', '.').' '.strtoupper($stock->item?->unit ?? ''),
                 'rice_variety_id' => $stock->item?->rice_variety_id,
             ])->values(),
+            'outputItems' => Item::where('is_active', true)
+                ->where('category', 'benih')
+                ->when($seedProduction->rice_variety_id, fn ($q) => $q->where('rice_variety_id', $seedProduction->rice_variety_id))
+                ->orderBy('name')
+                ->get(),
+            'warehouses' => Warehouse::where('is_active', true)->orderBy('name')->get(),
             'stepStatuses' => SeedProductionStepController::statuses(),
             'stepCostTypes' => SeedProductionStepController::costTypes(),
             'stepPositions' => SeedProductionStepController::positions(),
@@ -247,6 +263,208 @@ class SeedProductionController extends Controller
                 ->distinct()
                 ->orderBy('label')
                 ->pluck('label'),
+        ]);
+    }
+
+    public function updateCertification(Request $request, SeedProduction $seedProduction): RedirectResponse
+    {
+        if ($seedProduction->status === 'batal') {
+            return redirect()
+                ->route('seed-productions.show', $seedProduction)
+                ->withErrors(['lab_result' => 'Data uji lab & sertifikasi tidak dapat disimpan karena produksi sudah dibatalkan.']);
+        }
+
+        $validated = $request->validate([
+            'lab_test_date' => ['nullable', 'date'],
+            'moisture_content' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'purity_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'germination_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'lab_result' => ['nullable', 'string', Rule::in(array_keys(self::LAB_RESULTS))],
+            'certificate_number' => ['nullable', 'string', 'max:100'],
+            'label_serial_range' => ['nullable', 'string', 'max:150'],
+            'label_count' => ['nullable', 'integer', 'min:1', 'max:10000000'],
+            'label_expiry_date' => ['nullable', 'date'],
+            'certification_notes' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($seedProduction, $validated, $request) {
+            $seedProduction->update([
+                'lab_test_date' => $validated['lab_test_date'] ?? null,
+                'moisture_content' => $validated['moisture_content'] ?? null,
+                'purity_percentage' => $validated['purity_percentage'] ?? null,
+                'germination_rate' => $validated['germination_rate'] ?? null,
+                'lab_result' => $validated['lab_result'] ?? null,
+                'certificate_number' => $validated['certificate_number'] ? trim((string) $validated['certificate_number']) : null,
+                'label_serial_range' => $validated['label_serial_range'] ? trim((string) $validated['label_serial_range']) : null,
+                'label_count' => $validated['label_count'] ?? null,
+                'label_expiry_date' => $validated['label_expiry_date'] ?? null,
+                'certification_notes' => $validated['certification_notes'] ?? null,
+            ]);
+
+            if (($validated['lab_result'] ?? null) === 'lulus') {
+                $sampleStep = $seedProduction->steps()->where('stage', 'pengambilan_sampel')->first();
+                if ($sampleStep && $sampleStep->status !== 'selesai') {
+                    $sampleStep->update([
+                        'actual_date' => $sampleStep->actual_date ?? ($validated['lab_test_date'] ?? now()->toDateString()),
+                        'status' => 'selesai',
+                        'updated_by' => $request->user()?->id,
+                    ]);
+                }
+            }
+
+            if (filled($validated['label_serial_range'] ?? null) || filled($validated['label_count'] ?? null)) {
+                $labelStep = $seedProduction->steps()->where('stage', 'cetak_label')->first();
+                if ($labelStep && $labelStep->status !== 'selesai') {
+                    $labelStep->update([
+                        'actual_date' => $labelStep->actual_date ?? ($validated['lab_test_date'] ?? now()->toDateString()),
+                        'status' => 'selesai',
+                        'updated_by' => $request->user()?->id,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()
+            ->route('seed-productions.show', $seedProduction)
+            ->with('success', 'Data uji laboratorium & label sertifikasi BPSB berhasil disimpan.');
+    }
+
+    public function updateOutput(Request $request, SeedProduction $seedProduction): RedirectResponse
+    {
+        if ($seedProduction->status === 'batal') {
+            return redirect()
+                ->route('seed-productions.show', $seedProduction)
+                ->withErrors(['output_item_id' => 'Hasil produksi tidak bisa disimpan karena produksi sudah dibatalkan.']);
+        }
+
+        $validated = $request->validate([
+            'output_item_id' => [
+                'required',
+                'uuid',
+                Rule::exists('items', 'id')
+                    ->where('is_active', true)
+                    ->where('category', 'benih')
+                    ->when($seedProduction->rice_variety_id, fn ($rule) => $rule->where('rice_variety_id', $seedProduction->rice_variety_id)),
+            ],
+            'output_warehouse_id' => ['required', 'uuid', 'exists:warehouses,id'],
+            'lot_number' => ['nullable', 'string', 'max:100'],
+            'output_date' => ['required', 'date'],
+            'output_quantity' => ['required', 'numeric', 'min:0.01', 'max:9999999999.99'],
+            'status' => ['required', 'string', Rule::in(['proses', 'siap_salur'])],
+        ]);
+
+        $lotNumber = $request->has('lot_number')
+            ? ($request->filled('lot_number')
+                ? Str::upper(preg_replace('/\s+/', ' ', trim((string) $request->input('lot_number'))))
+                : null)
+            : $seedProduction->lot_number;
+
+        DB::transaction(function () use ($seedProduction, $validated, $lotNumber, $request) {
+            $oldItemId = $seedProduction->output_item_id;
+            $oldWarehouseId = $seedProduction->output_warehouse_id;
+            $oldLotNumber = $seedProduction->lot_number;
+            $oldQuantity = (float) ($seedProduction->output_quantity ?? 0);
+            $newQuantity = (float) $validated['output_quantity'];
+
+            $newStock = Stock::lockForUpdate()->firstOrCreate(
+                [
+                    'item_id' => $validated['output_item_id'],
+                    'warehouse_id' => $validated['output_warehouse_id'],
+                    'lot_number' => $lotNumber,
+                ],
+                ['quantity' => 0]
+            );
+
+            if ($oldQuantity > 0 && $oldItemId && $oldWarehouseId) {
+                $sameStock = $oldItemId === $validated['output_item_id']
+                    && $oldWarehouseId === $validated['output_warehouse_id']
+                    && $oldLotNumber === $lotNumber;
+
+                if ($sameStock) {
+                    $this->applyOutputStockDifference($newStock, $newQuantity - $oldQuantity, $validated['output_date'], $seedProduction, $request);
+                } else {
+                    $oldStock = Stock::lockForUpdate()
+                        ->where('item_id', $oldItemId)
+                        ->where('warehouse_id', $oldWarehouseId)
+                        ->where('lot_number', $oldLotNumber)
+                        ->first();
+
+                    if ($oldStock && $oldQuantity > 0) {
+                        $this->applyOutputStockDifference($oldStock, -$oldQuantity, $validated['output_date'], $seedProduction, $request);
+                    }
+
+                    $this->applyOutputStockDifference($newStock, $newQuantity, $validated['output_date'], $seedProduction, $request);
+                }
+            } else {
+                $this->applyOutputStockDifference($newStock, $newQuantity, $validated['output_date'], $seedProduction, $request);
+            }
+
+            $outputItem = Item::find($validated['output_item_id']);
+
+            $seedProduction->forceFill([
+                'output_item_id' => $validated['output_item_id'],
+                'output_warehouse_id' => $validated['output_warehouse_id'],
+                'output_stock_id' => $newStock->id,
+                'lot_number' => $lotNumber,
+                'output_date' => $validated['output_date'],
+                'output_quantity' => $newQuantity,
+                'unit' => $outputItem?->unit ?? $seedProduction->unit,
+                'status' => $validated['status'],
+            ])->save();
+
+            if ($validated['status'] === 'siap_salur') {
+                $readyStep = $seedProduction->steps()->where('stage', 'siap_salur')->first();
+                if ($readyStep) {
+                    $readyStep->update([
+                        'actual_date' => $readyStep->actual_date ?? $validated['output_date'],
+                        'quantity' => $readyStep->quantity ?? $newQuantity,
+                        'status' => 'selesai',
+                        'updated_by' => $request->user()?->id,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()
+            ->route('seed-productions.show', $seedProduction)
+            ->with('success', 'Hasil akhir produksi benih berhasil disimpan dan stok gudang telah diperbarui.');
+    }
+
+    private function applyOutputStockDifference(
+        Stock $stock,
+        float $difference,
+        string $movementDate,
+        SeedProduction $seedProduction,
+        Request $request
+    ): void {
+        if (abs($difference) < 0.00001) {
+            return;
+        }
+
+        $balanceAfter = (float) $stock->quantity + $difference;
+
+        if ($balanceAfter < 0) {
+            throw ValidationException::withMessages([
+                'output_quantity' => 'Stok hasil produksi sudah terpakai dan tidak mencukupi untuk dikoreksi.',
+            ]);
+        }
+
+        $stock->update(['quantity' => $balanceAfter]);
+
+        StockMovement::create([
+            'stock_id' => $stock->id,
+            'item_id' => $stock->item_id,
+            'warehouse_id' => $stock->warehouse_id,
+            'movement_date' => $movementDate,
+            'type' => 'seed_production_output',
+            'quantity_in' => $difference > 0 ? $difference : 0,
+            'quantity_out' => $difference < 0 ? abs($difference) : 0,
+            'balance_after' => $balanceAfter,
+            'reference_type' => 'seed_production',
+            'reference_id' => $seedProduction->id,
+            'reference_number' => $seedProduction->number,
+            'notes' => 'Hasil produksi benih jadi '.$seedProduction->number,
+            'created_by' => $request->user()?->id,
         ]);
     }
 

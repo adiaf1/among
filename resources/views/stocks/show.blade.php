@@ -86,11 +86,17 @@
                     @php
                         $movementTypes = [
                             'purchase' => ['label' => 'Pembelian', 'badge' => 'bg-label-success'],
+                            'sale' => ['label' => 'Penjualan', 'badge' => 'bg-label-danger'],
                             'transfer_in' => ['label' => 'Mutasi Masuk', 'badge' => 'bg-label-success'],
                             'transfer_out' => ['label' => 'Mutasi Keluar', 'badge' => 'bg-label-danger'],
                             'adjustment' => ['label' => 'Penyesuaian', 'badge' => 'bg-label-warning'],
                             'production_in' => ['label' => 'Hasil Produksi', 'badge' => 'bg-label-success'],
                             'production_out' => ['label' => 'Pemakaian Produksi', 'badge' => 'bg-label-danger'],
+                            'seed_production_output' => ['label' => 'Hasil Produksi Benih', 'badge' => 'bg-label-success'],
+                            'seed_production_input' => ['label' => 'Pemakaian Produksi', 'badge' => 'bg-label-danger'],
+                            'seed_growing_harvest' => ['label' => 'Hasil Panen Penangkaran', 'badge' => 'bg-label-success'],
+                            'seed_growing_usage' => ['label' => 'Pemakaian Benih Sumber', 'badge' => 'bg-label-danger'],
+                            'seed_growing_cancel' => ['label' => 'Batal Penangkaran', 'badge' => 'bg-label-info'],
                         ];
                     @endphp
                     @forelse($movements as $movement)

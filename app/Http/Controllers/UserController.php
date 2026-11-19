@@ -2,52 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use App\Support\PermissionCatalog;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        // Ambil parameter pencarian (jika ada)
-        $search = $request->input('search');
+        if (Permission::query()->count() < count(PermissionCatalog::allPermissionNames())) {
+            PermissionCatalog::syncDefaultPermissionsAndRoles();
+        }
 
-        // Query pengguna, filter kalau ada pencarian
-        $users = User::with('roles')
-            ->when($search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
+        $search = $request->string('search')->toString();
+        $roleFilter = $request->string('role')->toString();
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50, 100], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
+
+        $roles = Role::query()
+            ->with('permissions')
+            ->withCount('permissions')
+            ->orderByRaw("CASE WHEN name = 'super-admin' THEN 1 WHEN name = 'admin' THEN 2 WHEN name = 'editor' THEN 3 WHEN name = 'guest' THEN 4 ELSE 5 END")
+            ->orderBy('name')
+            ->get();
+
+        $users = User::query()
+            ->with('roles.permissions')
+            ->when($roleFilter, function ($query) use ($roleFilter) {
+                $query->whereHas('roles', fn ($q) => $q->where('name', $roleFilter));
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->orderBy('name')
-            ->paginate(10); // pagination
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('users.index', compact('users'));
+        return view('users.index', [
+            'users' => $users,
+            'roles' => $roles,
+            'flatPermissions' => PermissionCatalog::flatPermissions(),
+            'search' => $search,
+            'roleFilter' => $roleFilter,
+            'perPage' => $perPage,
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return redirect()->route('users.index');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        if (! $request->filled('roles') && $request->filled('role')) {
+            $request->merge(['roles' => [(string) $request->input('role')]]);
+        }
+
         $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'required|exists:roles,name',
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6'],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['required', 'string', 'exists:roles,name'],
         ]);
 
         $user = User::create([
@@ -56,76 +82,82 @@ class UserController extends Controller
             'password' => bcrypt($validated['password']),
         ]);
 
-        $role = Role::findByName($validated['role']);
-        $user->assignRole($role);
+        $user->syncRoles($validated['roles']);
 
-        return redirect()->route('users.index')->with('success', 'User baru Berhasil Dibuat!');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'Pengguna baru berhasil ditambahkan dan dikaitkan ke grup permission.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        return redirect()->route('users.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
+        return redirect()->route('users.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
-        // Validasi input
-        $validator = \Validator::make($request->all(), [
-            'name' => 'required|string|max:255', // Validasi nama pengguna
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id, // Validasi email
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,name', // Memastikan setiap role ada dalam tabel roles
-        ]);
-        
-
-        // Cek jika validasi gagal
-        if ($validator->fails()) {
-            return redirect()->route('users.edit', $user->id) // Kembali ke halaman edit pengguna
-                            ->withErrors($validator) // Menyimpan kesalahan dalam session
-                            ->withInput(); // Menyimpan input agar tetap terlihat
+        if (! $request->filled('roles') && $request->filled('role')) {
+            $request->merge(['roles' => [(string) $request->input('role')]]);
         }
 
-        // Jika validasi berhasil, perbarui informasi pengguna
-        $user->name = $request->name; // Perbarui nama
-        $user->email = $request->email; // Perbarui email
-        $user->save(); // Simpan perubahan pada pengguna
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'password' => ['nullable', 'string', 'min:6'],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['required', 'string', 'exists:roles,name'],
+        ]);
 
-        // Sinkronkan roles
-        $user->syncRoles($request->roles);
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
 
-        // Kembali ke halaman index dengan notifikasi sukses
-        return redirect()->route('users.index')->with('success', 'User Berhasil Diperbaharui.'); // Kembali ke index dengan sukses
+        if (! empty($validated['password'])) {
+            $payload['password'] = bcrypt($validated['password']);
+        }
+
+        $user->update($payload);
+        $user->syncRoles($validated['roles']);
+
+        if ($request->input('_return_to') === 'permission-groups') {
+            return redirect()
+                ->route('permission-groups.index')
+                ->with('success', "Grup permission untuk {$user->name} berhasil diperbarui.");
+        }
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'Data pengguna dan grup permission berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user): RedirectResponse
     {
+        if ($request->user()?->id === $user->id) {
+            return redirect()
+                ->route('users.index')
+                ->withErrors(['user' => 'Anda tidak dapat menghapus akun yang sedang digunakan.']);
+        }
+
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User Berhasil Dihapus!.');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'Pengguna berhasil dihapus.');
     }
 
-    /**
-     * Search the specified resource from storage.
-     */
-
-    public function search(Request $request)
+    public function search(Request $request): View
     {
         return $this->index($request);
     }

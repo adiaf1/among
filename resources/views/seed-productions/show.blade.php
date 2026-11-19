@@ -88,12 +88,14 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div>
-                            <span class="text-heading">Target Hasil</span>
+                            <span class="text-heading">Hasil Benih Jadi</span>
                             <h4 class="my-1">
-                                @if($seedProduction->target_quantity)
-                                    {{ number_format((float) $seedProduction->target_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}
+                                @if($seedProduction->output_quantity)
+                                    {{ number_format((float) $seedProduction->output_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}
+                                @elseif($seedProduction->target_quantity)
+                                    Target {{ number_format((float) $seedProduction->target_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }}
                                 @else
-                                    -
+                                    Belum Dicatat
                                 @endif
                             </h4>
                             <small class="text-muted">Gudang: {{ $seedProduction->outputWarehouse?->name ?? '-' }}</small>
@@ -197,6 +199,20 @@
                         <div class="col-sm-6">
                             <small class="text-muted d-block">Dibuat Oleh</small>
                             <span class="fw-medium">{{ $seedProduction->creator?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">No Induk Sertifikasi / LHU</small>
+                            <span class="fw-medium">{{ $seedProduction->certificate_number ?: '-' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Masa Edar Label</small>
+                            <span class="fw-medium">
+                                @if($seedProduction->label_expiry_date)
+                                    s/d {{ $seedProduction->label_expiry_date->format('d M Y') }}
+                                @else
+                                    -
+                                @endif
+                            </span>
                         </div>
                         <div class="col-12">
                             <small class="text-muted d-block">Catatan</small>
@@ -618,6 +634,349 @@
                         </tfoot>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            @php
+                $isCertificationOld = old('_form_type') === 'save_certification';
+                $currentLabResult = $isCertificationOld ? old('lab_result') : $seedProduction->lab_result;
+                $labResultBadge = match($seedProduction->lab_result) {
+                    'lulus' => 'bg-label-success',
+                    'tidak_lulus' => 'bg-label-danger',
+                    'menunggu' => 'bg-label-warning',
+                    default => 'bg-label-secondary',
+                };
+                $labResultLabel = $seedProduction->lab_result
+                    ? ($labResults[$seedProduction->lab_result] ?? ucfirst(str_replace('_', ' ', (string) $seedProduction->lab_result)))
+                    : 'Belum Diuji';
+            @endphp
+            <div class="card">
+                <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 border-bottom">
+                    <div>
+                        <h5 class="mb-0">Uji Laboratorium & Label Sertifikasi (Standar BPSB)</h5>
+                        <small class="text-muted">Catat hasil uji mutu laboratorium (Kadar Air, Kemurnian, Daya Berkecambah) serta nomor sertifikat dan seri label benih.</small>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge {{ $labResultBadge }}">{{ $labResultLabel }}</span>
+                        @if($seedProduction->certificate_number)
+                            <span class="badge bg-label-info">{{ $seedProduction->certificate_number }}</span>
+                        @endif
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('seed-productions.certification.update', $seedProduction) }}">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="_form_type" value="save_certification">
+                    <div class="card-body pt-4">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <label for="lab_test_date" class="form-label">Tanggal Uji Lab</label>
+                                <input
+                                    type="date"
+                                    id="lab_test_date"
+                                    name="lab_test_date"
+                                    value="{{ $isCertificationOld ? old('lab_test_date') : $seedProduction->lab_test_date?->toDateString() }}"
+                                    class="form-control @error('lab_test_date') is-invalid @enderror"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('lab_test_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="moisture_content" class="form-label">Kadar Air / KA (%)</label>
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        id="moisture_content"
+                                        name="moisture_content"
+                                        value="{{ $isCertificationOld ? old('moisture_content') : $seedProduction->moisture_content }}"
+                                        class="form-control @error('moisture_content') is-invalid @enderror"
+                                        placeholder="Contoh: 12.00"
+                                        @disabled($seedProduction->status === 'batal')
+                                    >
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Standar BPSB: Maks 13,0%</div>
+                                @error('moisture_content') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="purity_percentage" class="form-label">Kemurnian Benih (%)</label>
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        id="purity_percentage"
+                                        name="purity_percentage"
+                                        value="{{ $isCertificationOld ? old('purity_percentage') : $seedProduction->purity_percentage }}"
+                                        class="form-control @error('purity_percentage') is-invalid @enderror"
+                                        placeholder="Contoh: 99.20"
+                                        @disabled($seedProduction->status === 'batal')
+                                    >
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Standar BPSB: Min 98,0%</div>
+                                @error('purity_percentage') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="germination_rate" class="form-label">Daya Berkecambah / DB (%)</label>
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        id="germination_rate"
+                                        name="germination_rate"
+                                        value="{{ $isCertificationOld ? old('germination_rate') : $seedProduction->germination_rate }}"
+                                        class="form-control @error('germination_rate') is-invalid @enderror"
+                                        placeholder="Contoh: 88.00"
+                                        @disabled($seedProduction->status === 'batal')
+                                    >
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Standar BPSB: Min 80,0%</div>
+                                @error('germination_rate') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="lab_result" class="form-label">Status Hasil Uji Lab</label>
+                                <select id="lab_result" name="lab_result" class="form-select @error('lab_result') is-invalid @enderror" @disabled($seedProduction->status === 'batal')>
+                                    <option value="">Belum Diuji</option>
+                                    @foreach($labResults as $value => $label)
+                                        <option value="{{ $value }}" @selected($currentLabResult === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                @error('lab_result') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="certificate_number" class="form-label">No Induk Sertifikasi / LHU</label>
+                                <input
+                                    type="text"
+                                    id="certificate_number"
+                                    name="certificate_number"
+                                    value="{{ $isCertificationOld ? old('certificate_number') : $seedProduction->certificate_number }}"
+                                    class="form-control @error('certificate_number') is-invalid @enderror"
+                                    maxlength="100"
+                                    placeholder="Contoh: LHU/BPSB/2026/0012"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('certificate_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="label_serial_range" class="form-label">Nomor Seri Label</label>
+                                <input
+                                    type="text"
+                                    id="label_serial_range"
+                                    name="label_serial_range"
+                                    value="{{ $isCertificationOld ? old('label_serial_range') : $seedProduction->label_serial_range }}"
+                                    class="form-control @error('label_serial_range') is-invalid @enderror"
+                                    maxlength="150"
+                                    placeholder="Contoh: BR-00101 s/d BR-00500"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('label_serial_range') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="label_count" class="form-label">Jumlah Keping Label</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    id="label_count"
+                                    name="label_count"
+                                    value="{{ $isCertificationOld ? old('label_count') : $seedProduction->label_count }}"
+                                    class="form-control @error('label_count') is-invalid @enderror"
+                                    placeholder="Contoh: 400"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('label_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="label_expiry_date" class="form-label">Tanggal Akhir Masa Edar Label</label>
+                                <input
+                                    type="date"
+                                    id="label_expiry_date"
+                                    name="label_expiry_date"
+                                    value="{{ $isCertificationOld ? old('label_expiry_date') : $seedProduction->label_expiry_date?->toDateString() }}"
+                                    class="form-control @error('label_expiry_date') is-invalid @enderror"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('label_expiry_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-8">
+                                <label for="certification_notes" class="form-label">Catatan Uji Lab / Sertifikasi</label>
+                                <input
+                                    type="text"
+                                    id="certification_notes"
+                                    name="certification_notes"
+                                    value="{{ $isCertificationOld ? old('certification_notes') : $seedProduction->certification_notes }}"
+                                    class="form-control @error('certification_notes') is-invalid @enderror"
+                                    placeholder="Catatan hasil pengujian laboratorium atau penerbitan label"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('certification_notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary" @disabled($seedProduction->status === 'batal')>
+                            <i class="icon-base bx bx-check-shield me-1"></i> Simpan Data Uji Lab & Sertifikasi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 border-bottom">
+                    <div>
+                        <h5 class="mb-0">Hasil Akhir Produksi (Benih Jadi)</h5>
+                        <small class="text-muted">Simpan hasil akhir benih jadi agar otomatis masuk ke saldo stok gudang hasil.</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        @if($seedProduction->output_quantity)
+                            <span class="badge bg-label-success">
+                                Sudah Masuk Stok ({{ number_format((float) $seedProduction->output_quantity, 2, ',', '.') }} {{ strtoupper($seedProduction->unit) }})
+                            </span>
+                            @if($seedProduction->output_stock_id)
+                                <a href="{{ route('stocks.show', $seedProduction->output_stock_id) }}" class="btn btn-sm btn-outline-primary">
+                                    <span class="icon-base bx bx-list-ul icon-sm me-1"></span>Kartu Stok
+                                </a>
+                            @endif
+                        @else
+                            <span class="badge bg-label-secondary">Belum Masuk Stok</span>
+                        @endif
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('seed-productions.output.update', $seedProduction) }}">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="_form_type" value="save_output">
+                    @php
+                        $isOutputOld = old('_form_type') === 'save_output';
+                    @endphp
+                    <div class="card-body pt-4">
+                        @if($seedProduction->status === 'batal')
+                            <div class="alert alert-warning">
+                                Hasil produksi tidak bisa disimpan karena produksi sudah dibatalkan.
+                            </div>
+                        @endif
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label for="output_item_id" class="form-label">Barang Benih Jadi <span class="text-danger">*</span></label>
+                                @if($outputItems->isEmpty())
+                                    <div class="alert alert-warning mb-2 py-2">
+                                        Belum ada master barang kategori <strong>Benih</strong> untuk varietas {{ $seedProduction->riceVariety?->name ?? 'ini' }}.
+                                    </div>
+                                    <a href="{{ route('master.items.index') }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="icon-base bx bx-plus me-1"></i> Kelola Master Barang
+                                    </a>
+                                @else
+                                    <select id="output_item_id" name="output_item_id" class="form-select @error('output_item_id') is-invalid @enderror" required @disabled($seedProduction->status === 'batal')>
+                                        <option value="">Pilih barang benih jadi</option>
+                                        @foreach($outputItems as $item)
+                                            <option
+                                                value="{{ $item->id }}"
+                                                @selected(($isOutputOld ? old('output_item_id') : ($seedProduction->output_item_id ?? ($outputItems->count() === 1 ? $item->id : ''))) === $item->id)
+                                            >
+                                                {{ $item->code }} - {{ $item->name }} ({{ strtoupper($item->unit) }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('output_item_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @endif
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="output_warehouse_id" class="form-label">Gudang Hasil <span class="text-danger">*</span></label>
+                                <select id="output_warehouse_id" name="output_warehouse_id" class="form-select @error('output_warehouse_id') is-invalid @enderror" required @disabled($seedProduction->status === 'batal')>
+                                    <option value="">Pilih gudang hasil</option>
+                                    @foreach($warehouses as $warehouse)
+                                        <option
+                                            value="{{ $warehouse->id }}"
+                                            @selected(($isOutputOld ? old('output_warehouse_id') : $seedProduction->output_warehouse_id) === $warehouse->id)
+                                        >
+                                            {{ $warehouse->code }} - {{ $warehouse->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('output_warehouse_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="output_lot_number" class="form-label">No Lot Benih Jadi</label>
+                                <input
+                                    type="text"
+                                    id="output_lot_number"
+                                    name="lot_number"
+                                    value="{{ $isOutputOld ? old('lot_number') : $seedProduction->lot_number }}"
+                                    class="form-control @error('lot_number') is-invalid @enderror"
+                                    maxlength="100"
+                                    placeholder="Contoh: LOT-IR64-001"
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('lot_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="output_date" class="form-label">Tanggal Selesai / Masuk Stok <span class="text-danger">*</span></label>
+                                <input
+                                    type="date"
+                                    id="output_date"
+                                    name="output_date"
+                                    value="{{ $isOutputOld ? old('output_date') : ($seedProduction->output_date?->toDateString() ?? now()->toDateString()) }}"
+                                    class="form-control @error('output_date') is-invalid @enderror"
+                                    required
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('output_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="output_quantity" class="form-label">Jumlah Bersih Benih Jadi ({{ strtoupper($seedProduction->unit) }}) <span class="text-danger">*</span></label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    id="output_quantity"
+                                    name="output_quantity"
+                                    value="{{ $isOutputOld ? old('output_quantity') : ($seedProduction->output_quantity ?? $seedProduction->target_quantity) }}"
+                                    class="form-control @error('output_quantity') is-invalid @enderror"
+                                    required
+                                    @disabled($seedProduction->status === 'batal')
+                                >
+                                @error('output_quantity') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="output_status" class="form-label">Status Produksi <span class="text-danger">*</span></label>
+                                <select id="output_status" name="status" class="form-select" required @disabled($seedProduction->status === 'batal')>
+                                    <option value="siap_salur" @selected(($isOutputOld ? old('status', 'siap_salur') : ($seedProduction->output_quantity ? $seedProduction->status : 'siap_salur')) === 'siap_salur')>Siap Salur (Selesai)</option>
+                                    <option value="proses" @selected(($isOutputOld ? old('status') : ($seedProduction->output_quantity ? $seedProduction->status : '')) === 'proses')>Masih Proses</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary" @disabled($seedProduction->status === 'batal' || $outputItems->isEmpty())>
+                            <i class="icon-base bx bx-save me-1"></i> Simpan Hasil ke Stok Gudang
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

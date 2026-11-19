@@ -397,6 +397,56 @@ class SeedProductionTest extends TestCase
         ]);
     }
 
+    public function test_editor_can_record_finished_seed_output_and_increase_stock(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+        $finishedSeedItem = Item::create([
+            'code' => 'BNH001',
+            'name' => 'Benih Jadi IR64 SS',
+            'category' => 'benih',
+            'material_state' => 'benih_jadi',
+            'unit' => 'kg',
+            'rice_variety_id' => $seedProduction->rice_variety_id,
+            'seed_class_id' => $seedProduction->seed_class_id,
+            'minimum_stock' => 0,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($editor)->patch(
+            route('seed-productions.output.update', $seedProduction),
+            [
+                'output_item_id' => $finishedSeedItem->id,
+                'output_warehouse_id' => $seedProduction->output_warehouse_id,
+                'lot_number' => 'LOT-IR64-001',
+                'output_date' => '2026-10-05',
+                'output_quantity' => 650,
+                'status' => 'siap_salur',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseHas('seed_productions', [
+            'id' => $seedProduction->id,
+            'output_item_id' => $finishedSeedItem->id,
+            'output_quantity' => 650,
+            'status' => 'siap_salur',
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'item_id' => $finishedSeedItem->id,
+            'warehouse_id' => $seedProduction->output_warehouse_id,
+            'lot_number' => 'LOT-IR64-001',
+            'quantity' => 650,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'item_id' => $finishedSeedItem->id,
+            'warehouse_id' => $seedProduction->output_warehouse_id,
+            'type' => 'seed_production_output',
+            'quantity_in' => 650,
+            'balance_after' => 650,
+        ]);
+    }
+
     public function test_create_page_can_choose_lot_from_harvested_seed_growing(): void
     {
         $editor = $this->userWithRole('editor');
@@ -459,6 +509,50 @@ class SeedProductionTest extends TestCase
         $response->assertSee('LOT-PANEN-001');
         $response->assertSee($data['riceVariety']->id, false);
         $response->assertSee($data['seedClass']->id, false);
+    }
+
+    public function test_editor_can_record_lab_test_and_certification_data(): void
+    {
+        $editor = $this->userWithRole('editor');
+        $seedProduction = $this->createSeedProduction($editor);
+
+        $response = $this->actingAs($editor)->patch(
+            route('seed-productions.certification.update', $seedProduction),
+            [
+                'lab_test_date' => '2026-10-01',
+                'moisture_content' => 11.80,
+                'purity_percentage' => 99.40,
+                'germination_rate' => 89.00,
+                'lab_result' => 'lulus',
+                'certificate_number' => 'LHU/BPSB/2026/0015',
+                'label_serial_range' => 'BR-00101 s/d BR-00500',
+                'label_count' => 400,
+                'label_expiry_date' => '2027-04-01',
+                'certification_notes' => 'Memenuhi standar mutu benih sebar.',
+            ]
+        );
+
+        $response->assertRedirect(route('seed-productions.show', $seedProduction));
+        $this->assertDatabaseHas('seed_productions', [
+            'id' => $seedProduction->id,
+            'moisture_content' => 11.80,
+            'purity_percentage' => 99.40,
+            'germination_rate' => 89.00,
+            'lab_result' => 'lulus',
+            'certificate_number' => 'LHU/BPSB/2026/0015',
+            'label_serial_range' => 'BR-00101 s/d BR-00500',
+            'label_count' => 400,
+        ]);
+        $this->assertDatabaseHas('seed_production_steps', [
+            'seed_production_id' => $seedProduction->id,
+            'stage' => 'pengambilan_sampel',
+            'status' => 'selesai',
+        ]);
+        $this->assertDatabaseHas('seed_production_steps', [
+            'seed_production_id' => $seedProduction->id,
+            'stage' => 'cetak_label',
+            'status' => 'selesai',
+        ]);
     }
 
     public function test_guest_role_cannot_access_seed_productions(): void

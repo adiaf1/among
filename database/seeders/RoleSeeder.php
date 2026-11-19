@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Support\PermissionCatalog;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -13,15 +14,18 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $editorRole = Role::firstOrCreate(['name' => 'editor']);
-        $guestRole = Role::firstOrCreate(['name' => 'guest']);
+        PermissionCatalog::syncDefaultPermissionsAndRoles();
+
+        $superAdminRole = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $editorRole = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
+        $guestRole = Role::firstOrCreate(['name' => 'guest', 'guard_name' => 'web']);
 
         $admin = User::updateOrCreate(
             ['email' => 'admin@mail.com'],
-            ['name' => 'Admin', 'password' => bcrypt('123456')]
+            ['name' => 'Super Admin', 'password' => bcrypt('123456')]
         );
-        $admin->syncRoles([$adminRole]);
+        $admin->syncRoles([$superAdminRole, $adminRole]);
 
         $editor = User::updateOrCreate(
             ['email' => 'editor@mail.com'],
@@ -35,5 +39,4 @@ class RoleSeeder extends Seeder
         );
         $guest->syncRoles([$guestRole]);
     }
-
 }
