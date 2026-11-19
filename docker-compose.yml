@@ -1,0 +1,53 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: among_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    volumes:
+      - app_storage:/var/www/html/storage
+      - app_uploads:/var/www/html/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - among_network
+
+  db:
+    image: mysql:8.0
+    container_name: among_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-among_db}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret123}
+      MYSQL_USER: ${DB_USERNAME:-among}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - among_network
+
+volumes:
+  app_storage:
+  app_uploads:
+  mysql_data:
+
+networks:
+  among_network:
+    driver: bridge
