@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CompanySettingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FarmerController;
@@ -45,6 +46,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('permission-groups', PermissionGroupController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('settings/company', [CompanySettingController::class, 'edit'])->name('settings.company.edit');
+    Route::put('settings/company', [CompanySettingController::class, 'update'])->name('settings.company.update');
 });
 
 Route::middleware(['auth'])

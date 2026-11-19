@@ -3,15 +3,13 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
     @include('reports._print_styles')
-    <div class="report-print-header">
-        <div>
-            <h4 class="mb-0">{{ config('app.name') }}</h4>
-            <div>Laporan Penangkaran & Realisasi Panen Benih</div>
-        </div>
-        <div class="text-end">
-            <div>Musim/Tahun: {{ $seasonYear ?: 'Semua Tahun' }}</div>
-            <small>Dicetak: {{ now()->format('d M Y H:i') }}</small>
-        </div>
+    <div class="report-print-header" style="display: none;">
+        @include('partials.print-letterhead', [
+            'wrapperClass' => 'w-100',
+            'documentTitle' => 'Laporan Penangkaran & Realisasi Panen',
+            'documentSubtitle' => 'Musim/Tahun: '.($seasonYear ?: 'Semua Tahun'),
+            'documentMeta' => 'Dicetak: '.now()->format('d M Y H:i'),
+        ])
     </div>
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 py-4 no-print">

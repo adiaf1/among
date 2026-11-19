@@ -51,12 +51,8 @@
         }
 
         .report-print-header {
-            display: flex !important;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 2px solid #111;
+            display: block !important;
             margin-bottom: 12px;
-            padding-bottom: 8px;
         }
 
         .report-print-footer {

@@ -170,16 +170,14 @@
     </style>
 
     <div class="print-document">
-        <div class="print-header">
-            <div>
-                <h3 class="mb-1">{{ config('app.name') }}</h3>
-                <p class="mb-0">Faktur & Surat Jalan Penjualan Barang</p>
-            </div>
-            <div class="text-end">
-                <div class="print-title">Invoice Penjualan</div>
-                <div>{{ $sale->number }}</div>
-            </div>
-        </div>
+        @php
+            $companySetting = \App\Models\CompanySetting::current();
+        @endphp
+        @include('partials.print-letterhead', [
+            'documentTitle' => 'Invoice Penjualan',
+            'documentSubtitle' => $sale->number,
+            'documentMeta' => 'Faktur & Surat Jalan Penjualan Barang',
+        ])
 
         <div class="print-meta">
             <table>
@@ -286,9 +284,15 @@
             </tbody>
         </table>
 
+        @if($companySetting->invoice_footer_note)
+            <div style="margin-top: 14px; font-size: 11px; font-style: italic;">
+                Catatan: {{ $companySetting->invoice_footer_note }}
+            </div>
+        @endif
+
         <div class="print-signatures">
             <div class="signature-box">
-                <div>Dibuat Oleh,</div>
+                <div>{{ $companySetting->city ? $companySetting->city.', ' : '' }}{{ $sale->sale_date?->format('d M Y') }}<br>Dibuat Oleh,</div>
                 <div class="signature-line">{{ $sale->creator?->name ?: 'Petugas' }}</div>
             </div>
             <div class="signature-box">
