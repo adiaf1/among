@@ -8,6 +8,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LandController;
 use App\Http\Controllers\PermissionGroupController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RiceVarietyController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SeedClassController;
@@ -101,6 +102,30 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('seed-productions/{seed_production}/output', [SeedProductionController::class, 'updateOutput'])
             ->name('seed-productions.output.update');
         Route::resource('seed-productions', SeedProductionController::class)->only(['index', 'create', 'store', 'show']);
+    });
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('stocks', [ReportController::class, 'stocks'])
+            ->name('stocks')
+            ->middleware('module.access:stocks.manage');
+        Route::get('purchases', [ReportController::class, 'purchases'])
+            ->name('purchases')
+            ->middleware('module.access:purchases.manage');
+        Route::get('sales', [ReportController::class, 'sales'])
+            ->name('sales')
+            ->middleware('module.access:sales.manage');
+        Route::get('seed-growings', [ReportController::class, 'seedGrowings'])
+            ->name('seed-growings')
+            ->middleware('module.access:seed-growings.manage');
+        Route::get('seed-productions', [ReportController::class, 'seedProductions'])
+            ->name('seed-productions')
+            ->middleware('module.access:seed-productions.manage');
+        Route::get('certifications', [ReportController::class, 'certifications'])
+            ->name('certifications')
+            ->middleware('module.access:seed-productions.manage');
+        Route::get('financial', [ReportController::class, 'financial'])
+            ->name('financial')
+            ->middleware('module.access:reports.financial.view');
     });
 });
 

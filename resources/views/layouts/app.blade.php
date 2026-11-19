@@ -389,6 +389,14 @@
                                         'sales.manage',
                                         'stock-transfers.manage',
                                     ]);
+                                    $canAccessAnyReport = $navUser && $navUser->canAccessModule([
+                                        'stocks.manage',
+                                        'purchases.manage',
+                                        'sales.manage',
+                                        'seed-growings.manage',
+                                        'seed-productions.manage',
+                                        'reports.financial.view',
+                                    ]);
                                 @endphp
 
                                 @if($canAccessAnyMaster)
@@ -524,6 +532,71 @@
                                         <i class="menu-icon tf-icons bx bx-cog"></i>
                                         <div data-i18n="Produksi Benih">Produksi Benih</div>
                                     </a>
+                                </li>
+                                @endif
+
+                                @if($canAccessAnyReport)
+                                <li class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                                    <a href="javascript:void(0)" class="menu-link menu-toggle">
+                                        <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                                        <div data-i18n="Laporan">Laporan</div>
+                                    </a>
+                                    <ul class="menu-sub">
+                                        @if($navUser->canAccessModule('stocks.manage'))
+                                        <li class="menu-item {{ request()->routeIs('reports.stocks') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.stocks') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-layer"></i>
+                                                <div data-i18n="Rekap & Mutasi Stok">Rekap & Mutasi Stok</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('purchases.manage'))
+                                        <li class="menu-item {{ request()->routeIs('reports.purchases') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.purchases') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-cart-add"></i>
+                                                <div data-i18n="Pembelian Bahan">Pembelian Bahan</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('sales.manage'))
+                                        <li class="menu-item {{ request()->routeIs('reports.sales') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.sales') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-shopping-bag"></i>
+                                                <div data-i18n="Penjualan & Piutang">Penjualan & Piutang</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('seed-growings.manage'))
+                                        <li class="menu-item {{ request()->routeIs('reports.seed-growings') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.seed-growings') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-leaf"></i>
+                                                <div data-i18n="Penangkaran & Panen">Penangkaran & Panen</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('seed-productions.manage'))
+                                        <li class="menu-item {{ request()->routeIs('reports.seed-productions') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.seed-productions') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-cog"></i>
+                                                <div data-i18n="Produksi & HPP Benih">Produksi & HPP Benih</div>
+                                            </a>
+                                        </li>
+                                        <li class="menu-item {{ request()->routeIs('reports.certifications') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.certifications') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-certification"></i>
+                                                <div data-i18n="Uji Lab & Sertifikasi BPSB">Uji Lab & Sertifikasi BPSB</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                        @if($navUser->canAccessModule('reports.financial.view'))
+                                        <li class="menu-item {{ request()->routeIs('reports.financial') ? 'active' : '' }}">
+                                            <a href="{{ route('reports.financial') }}" class="menu-link">
+                                                <i class="menu-icon tf-icons bx bx-wallet"></i>
+                                                <div data-i18n="Keuangan Operasional">Keuangan Operasional</div>
+                                            </a>
+                                        </li>
+                                        @endif
+                                    </ul>
                                 </li>
                                 @endif
 
